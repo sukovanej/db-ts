@@ -30,7 +30,7 @@ export const createPostgresEngine = (
 
 export const createConnection = (
   postgresConnectionConfig: PostgresConnectionConfig
-): TE.TaskEither<DB.ConnectionError, DB.Connection> =>
+): TE.TaskEither<DB.DatabaseError, DB.Connection> =>
   pipe(
     TE.tryCatch(async () => {
       const client = new PostgresClient(postgresConnectionConfig);
