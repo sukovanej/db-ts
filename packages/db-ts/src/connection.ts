@@ -1,12 +1,12 @@
 import * as TE from 'fp-ts/TaskEither';
 
-import { ConnectionCloseError, QueryError } from './error';
+import { DatabaseError, QueryError } from './error';
 import { Query } from './query';
 import { Result } from './result';
 
 export interface Connection {
   query: (query: Query) => TE.TaskEither<QueryError, Result>;
-  close: () => TE.TaskEither<ConnectionCloseError, void>;
+  close: () => TE.TaskEither<DatabaseError, void>;
 }
 
 export interface ConnectionConfig {
@@ -16,3 +16,22 @@ export interface ConnectionConfig {
   port: number;
   host: string;
 }
+
+/**
+ * Run a query on the connection.
+ *
+ * @category combinators
+ */
+export const query =
+  (query: Query) =>
+  (connection: Connection): TE.TaskEither<QueryError, Result> =>
+    connection.query(query);
+
+/**
+ * Close the connection.
+ *
+ * @category combinators
+ */
+export const closeConnection = (
+  connection: Connection
+): TE.TaskEither<DatabaseError, void> => connection.close();
