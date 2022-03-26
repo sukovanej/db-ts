@@ -2154,11 +2154,11 @@ __metadata:
 
 "db-ts@file:../db-ts::locator=db-ts-postgres%40workspace%3Apackages%2Fdb-ts-postgres":
   version: 0.0.1
-  resolution: "db-ts@file:../db-ts#../db-ts::hash=e89db6&locator=db-ts-postgres%40workspace%3Apackages%2Fdb-ts-postgres"
+  resolution: "db-ts@file:../db-ts#../db-ts::hash=d706f5&locator=db-ts-postgres%40workspace%3Apackages%2Fdb-ts-postgres"
   peerDependencies:
     fp-ts: ^2.11.9
     io-ts: ^2.2.16
-  checksum: efdd0199383b5e2379553593458d85f5e8378bb7ff434ef7d741b49d05f206d677c8dede38e6e38d4f4a4820ed6e796962351a8d21ab3c8ccf82f9e45eb039ca
+  checksum: bad3242f4a95d7c7f160f1016c58815d9c12a871de532a003d3ab4e7e8ddebf01b9710dcf193910423dfd34954a60bc8eae8fb39732e21191e5ead0f5061c657
   languageName: node
   linkType: hard
 
