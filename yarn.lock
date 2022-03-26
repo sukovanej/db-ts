@@ -2140,7 +2140,6 @@ __metadata:
     "@types/pg": ^8.6.5
     db-ts: ../db-ts
     jest: ^27.5.1
-    jets: ^0.14.1
     pg: ^8.7.3
     ts-jest: ^27.1.4
     ts-node: ^10.7.0
@@ -4161,13 +4160,6 @@ __metadata:
   bin:
     jest: bin/jest.js
   checksum: 96f1d69042b3c6dfc695f2a4e4b0db38af6fb78582ad1a02beaa57cfcd77cbd31567d7d865c1c85709b7c3e176eefa3b2035ffecd646005f15d8ef528eccf205
-  languageName: node
-  linkType: hard
-
-"jets@npm:^0.14.1":
-  version: 0.14.1
-  resolution: "jets@npm:0.14.1"
-  checksum: d32613c7dd8a16b7ad1fd0241f44d80483a82df039beac5ed45ae8c7fcd58d3d3d0bf8aed86e12c9856e6816f1b04ef5ea11753010c46809fc39c5e026b6a773
   languageName: node
   linkType: hard
 
