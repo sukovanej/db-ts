@@ -1,0 +1,18 @@
+{
+  "npm": {
+    "publish": true
+  },
+  "git": {
+    "commitMessage": "chore: Release ${version}",
+    "push": true,
+    "pushArgs": "-o ci.skip",
+    "commit": true,
+    "requireCleanWorkingDir": false
+  },
+  "plugins": {
+    "@release-it/keep-a-changelog": {
+      "addUnreleased": true,
+      "strictLatest": false
+    }
+  }
+}

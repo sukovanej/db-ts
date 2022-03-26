@@ -1,19 +1,17 @@
 {
-  "name": "db-ts",
-  "version": "0.0.1",
-  "description": "Database client for Typescript based on fp-ts and io-ts.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/"
+  "private": true,
+  "packageManager": "yarn@3.2.0",
+  "workspaces": [
+    "core",
+    "postgres"
   ],
-  "repository": "https://github.com/sukovanej/db-ts",
-  "author": "Milan Suk",
-  "license": "MIT",
-  "scripts": {
-    "build": "tsc -p tsconfig.json"
-  },
   "devDependencies": {
+    "@release-it/keep-a-changelog": "^2.5.0",
+    "release-it": "^14.13.1",
     "typescript": "^4.6.3"
+  },
+  "scripts": {
+    "build-core": "cd core && tsc -p tsconfig.json",
+    "release": "release-it"
   }
 }

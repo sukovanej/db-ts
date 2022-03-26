@@ -1,0 +1,22 @@
+{
+  "name": "@db-ts/postgres",
+  "version": "0.0.1",
+  "description": "The postgres implementation for the db-ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "repository": "https://github.com/sukovanej/db-ts",
+  "author": "Milan Suk",
+  "dependencies": {
+    "db-ts": "0.0.1"
+  },
+  "peerDependencies": {
+    "pg": "^8.7.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.6.5",
+    "pg": "^8.7.3"
+  }
+}
