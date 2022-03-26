@@ -1,31 +1,42 @@
-export type ConnectionError = {
+import { pipe } from "fp-ts/function";
+
+export interface DatabaseError {
+  type: string,
+}
+
+export interface ConnectionError extends DatabaseError {
   type: "ConnectionError",
-  message: string,
 };
 
-export type ConnectionCloseError = {
+export interface ConnectionCloseError extends DatabaseError {
   type: "ConnectionCloseError",
-  message: string,
 };
 
-export type QueryError = {
-  type: "ConnectionCloseError",
-  message: string,
+export interface QueryError extends DatabaseError {
+  type: "QueryError",
 };
 
-export type DatabaseError = 
-  | ConnectionError
-  | ConnectionCloseError
-  | QueryError;
+export interface ResultOneError extends DatabaseError {
+  type: "ResultOneError",
+  detail: "MoreRowsReturned" | "NoRowReturned",
+}
 
-type DatabaseErrorFromType<T extends DatabaseError['type']> = 
+type DatabaseErrorFromType<T> = 
   T extends ConnectionError['type'] ? ConnectionError :
   T extends ConnectionCloseError['type'] ? ConnectionCloseError :
   T extends QueryError['type'] ? QueryError :
+  T extends ResultOneError['type'] ? ResultOneError :
   unknown;
 
-const createError = 
-  <T extends DatabaseError['type']>(type: T) =>
-  (message: DatabaseError['message']): DatabaseErrorFromType<T> => ({ type, message }) as DatabaseErrorFromType<T>
+const createError = <T>(type: T): DatabaseErrorFromType<T> => 
+  ({ type }) as DatabaseErrorFromType<T>
 
-export const createConnectionError = createError("ConnectionError");
+export const createConnectionError = createError("ConnectionError" as ConnectionError['type']);
+
+export const createResultOneError =
+  (detail: ResultOneError['detail']): ResultOneError =>
+    pipe(
+      "ResultOneError" as ResultOneError['type'],
+      createError,
+      (obj) => ({ ...obj, detail })
+    )
