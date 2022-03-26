@@ -12,7 +12,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "jest"
+    "test": "jest",
+    "test:ci": "jest --ci --reporters='default'"
   },
   "devDependencies": {
     "@types/jest": "^27.4.1",
