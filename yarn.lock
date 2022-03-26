@@ -416,18 +416,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@db-ts/postgres@workspace:postgres":
-  version: 0.0.0-use.local
-  resolution: "@db-ts/postgres@workspace:postgres"
-  dependencies:
-    "@types/pg": ^8.6.5
-    db-ts: 0.0.1
-    pg: ^8.7.3
-  peerDependencies:
-    pg: ^8.7.3
-  languageName: unknown
-  linkType: soft
-
 "@eslint/eslintrc@npm:^1.2.1":
   version: 1.2.1
   resolution: "@eslint/eslintrc@npm:1.2.1"
@@ -1124,7 +1112,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*":
+"@types/node@npm:*, @types/node@npm:^17.0.23":
   version: 17.0.23
   resolution: "@types/node@npm:17.0.23"
   checksum: a3517554737cbb042e76c30d0e5482192ac4d9bea0eeb086e2622d9cabf460a0eb52a696b99fcd18e7fcc93c96db6cc7ae507f6608f256ef0b5c1d8c87a5a470
@@ -2144,11 +2132,35 @@ __metadata:
   languageName: node
   linkType: hard
 
-"db-ts@0.0.1, db-ts@workspace:core":
+"db-ts-postgres@workspace:packages/db-ts-postgres":
   version: 0.0.0-use.local
-  resolution: "db-ts@workspace:core"
+  resolution: "db-ts-postgres@workspace:packages/db-ts-postgres"
   dependencies:
     "@types/jest": ^27.4.1
+    "@types/node": ^17.0.23
+    "@types/pg": ^8.6.5
+    db-ts: "db-ts:*"
+    fp-ts: ^2.11.9
+    io-ts: ^2.2.16
+    jest: ^27.5.1
+    pg: ^8.7.3
+    ts-jest: ^27.1.4
+    ts-node: ^10.7.0
+    typescript: ^4.6.3
+  peerDependencies:
+    db-ts: "*"
+    fp-ts: ^2.11.9
+    io-ts: ^2.2.16
+    pg: ^8.7.3
+  languageName: unknown
+  linkType: soft
+
+"db-ts@db-ts:*, db-ts@workspace:packages/db-ts":
+  version: 0.0.0-use.local
+  resolution: "db-ts@workspace:packages/db-ts"
+  dependencies:
+    "@types/jest": ^27.4.1
+    "@types/node": ^17.0.23
     fp-ts: ^2.11.9
     io-ts: ^2.2.16
     jest: ^27.5.1

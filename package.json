@@ -2,8 +2,7 @@
   "private": true,
   "packageManager": "yarn@3.2.0",
   "workspaces": [
-    "core",
-    "postgres"
+    "packages/*"
   ],
   "devDependencies": {
     "@release-it/keep-a-changelog": "^2.5.0",
@@ -15,7 +14,11 @@
     "typescript": "^4.6.3"
   },
   "scripts": {
-    "build-core": "cd core && tsc -p tsconfig.json",
+    "build-core": "yarn workspace db-ts run build",
+    "build-postgres": "yarn workspace db-ts-postgres run build",
+    "build-all": "yarn workspaces foreach run build",
+    "test-all": "yarn workspaces foreach run test",
+    "test-all:ci": "yarn workspaces foreach run test:ci",
     "release": "release-it",
     "lint": "eslint --ignore-path .eslintignore --ext .ts .",
     "lint:fix": "prettier --ignore-path .eslintignore --write ."
