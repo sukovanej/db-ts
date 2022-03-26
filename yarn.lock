@@ -416,18 +416,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@db-ts/postgres@workspace:postgres":
-  version: 0.0.0-use.local
-  resolution: "@db-ts/postgres@workspace:postgres"
-  dependencies:
-    "@types/pg": ^8.6.5
-    db-ts: 0.0.1
-    pg: ^8.7.3
-  peerDependencies:
-    pg: ^8.7.3
-  languageName: unknown
-  linkType: soft
-
 "@eslint/eslintrc@npm:^1.2.1":
   version: 1.2.1
   resolution: "@eslint/eslintrc@npm:1.2.1"
@@ -2144,9 +2132,37 @@ __metadata:
   languageName: node
   linkType: hard
 
-"db-ts@0.0.1, db-ts@workspace:core":
+"db-ts-postgres@workspace:packages/db-ts-postgres":
   version: 0.0.0-use.local
-  resolution: "db-ts@workspace:core"
+  resolution: "db-ts-postgres@workspace:packages/db-ts-postgres"
+  dependencies:
+    "@types/jest": ^27.4.1
+    "@types/pg": ^8.6.5
+    db-ts: ../db-ts
+    jest: ^27.5.1
+    jets: ^0.14.1
+    pg: ^8.7.3
+    ts-jest: ^27.1.4
+    ts-node: ^10.7.0
+    typescript: ^4.6.3
+  peerDependencies:
+    pg: ^8.7.3
+  languageName: unknown
+  linkType: soft
+
+"db-ts@file:../db-ts::locator=db-ts-postgres%40workspace%3Apackages%2Fdb-ts-postgres":
+  version: 0.0.1
+  resolution: "db-ts@file:../db-ts#../db-ts::hash=2c1a17&locator=db-ts-postgres%40workspace%3Apackages%2Fdb-ts-postgres"
+  peerDependencies:
+    fp-ts: ^2.11.9
+    io-ts: ^2.2.16
+  checksum: 9b9859194bbc7744c0976a5df7e08021dfb7489a5ecaa97984bdc8fe4f17d48cd2697a4a72094c5b9de3ac08d8964b90703cfc1bfcf08b33dffbb4c47cc2c830
+  languageName: node
+  linkType: hard
+
+"db-ts@workspace:packages/db-ts":
+  version: 0.0.0-use.local
+  resolution: "db-ts@workspace:packages/db-ts"
   dependencies:
     "@types/jest": ^27.4.1
     fp-ts: ^2.11.9
@@ -4145,6 +4161,13 @@ __metadata:
   bin:
     jest: bin/jest.js
   checksum: 96f1d69042b3c6dfc695f2a4e4b0db38af6fb78582ad1a02beaa57cfcd77cbd31567d7d865c1c85709b7c3e176eefa3b2035ffecd646005f15d8ef528eccf205
+  languageName: node
+  linkType: hard
+
+"jets@npm:^0.14.1":
+  version: 0.14.1
+  resolution: "jets@npm:0.14.1"
+  checksum: d32613c7dd8a16b7ad1fd0241f44d80483a82df039beac5ed45ae8c7fcd58d3d3d0bf8aed86e12c9856e6816f1b04ef5ea11753010c46809fc39c5e026b6a773
   languageName: node
   linkType: hard
 

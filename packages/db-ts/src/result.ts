@@ -5,11 +5,21 @@ import * as D from 'io-ts/Decoder';
 import { pipe, constant } from 'fp-ts/function';
 import { createResultOneError, ResultOneError } from './error';
 
-export type Row = object;
+export type Row = { [column: string]: any };
+
+export interface FieldDef {
+  name: string;
+  tableID: number;
+  columnID: number;
+  dataTypeID: number;
+  dataTypeSize: number;
+  dataTypeModifier: number;
+  format: string;
+}
 
 export interface Result {
   rows: Row[];
-  fields: { name: string; dataTypeId: string }[];
+  fields: FieldDef[];
   command: string;
   rowCount: number;
 }

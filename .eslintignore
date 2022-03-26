@@ -6,3 +6,4 @@
 .prettierrc
 *.md
 *.yml
+dist

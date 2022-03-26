@@ -5,25 +5,20 @@ import {
   ConnectionConfig as PostgresConnectionConfig,
   Client as PostgresClient,
   Pool as PostgresPool,
+  QueryResult as PostgresResult,
 } from 'pg';
 
-import {
-  Connection,
-  ConnectionConfig,
-  ConnectionError,
-  Engine,
-  Pool,
-} from 'db-ts';
+import * as DB from 'db-ts';
 
-import { toConnectionError } from './error';
+import { toCloseError, toConnectionError, toQueryError } from './error';
 
 const toPostgresConnectionConfig = (
-  connectionConfig: ConnectionConfig
+  connectionConfig: DB.ConnectionConfig
 ): PostgresConnectionConfig => connectionConfig;
 
 export const createPostgresEngine = (
-  connectionConfig: ConnectionConfig
-): Engine =>
+  connectionConfig: DB.ConnectionConfig
+): DB.Engine =>
   pipe(
     connectionConfig,
     toPostgresConnectionConfig,
@@ -35,7 +30,7 @@ export const createPostgresEngine = (
 
 export const createConnection = (
   postgresConnectionConfig: PostgresConnectionConfig
-): TE.TaskEither<ConnectionError, Connection> =>
+): TE.TaskEither<DB.ConnectionError, DB.Connection> =>
   pipe(
     TE.tryCatch(async () => {
       const client = new PostgresClient(postgresConnectionConfig);
@@ -47,11 +42,32 @@ export const createConnection = (
 
 export const createPool = (
   postgresConnectionConfig: PostgresConnectionConfig
-): Pool => pipe(new PostgresPool(postgresConnectionConfig), postgresPoolToPool);
+): DB.Pool =>
+  pipe(new PostgresPool(postgresConnectionConfig), postgresPoolToPool);
 
 const postgresClientToConnection = (
   postgresClient: PostgresClient
-): Connection => pipe(postgresClient, hole());
+): DB.Connection =>
+  pipe(postgresClient, client => ({
+    query: clientToQueryFn(client),
+    close: clientToCloseFn(client),
+  }));
 
-const postgresPoolToPool = (postgresPool: PostgresPool): Pool =>
+const postgresPoolToPool = (postgresPool: PostgresPool): DB.Pool =>
   pipe(postgresPool, hole());
+
+const clientToQueryFn =
+  (client: PostgresClient): DB.Connection['query'] =>
+  (query: string) =>
+    pipe(
+      TE.tryCatch(() => client.query(query), toQueryError),
+      TE.map(toResult)
+    );
+
+const toResult = (postgresResult: PostgresResult<any>): DB.Result =>
+  postgresResult;
+
+const clientToCloseFn =
+  (client: PostgresClient): DB.Connection['close'] =>
+  () =>
+    TE.tryCatch(() => client.end(), toCloseError);
