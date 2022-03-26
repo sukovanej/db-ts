@@ -1,11 +1,11 @@
-import { pipe, hole } from 'fp-ts/function'
-import * as TE from 'fp-ts/TaskEither'
+import { pipe, hole } from 'fp-ts/function';
+import * as TE from 'fp-ts/TaskEither';
 
 import {
   ConnectionConfig as PostgresConnectionConfig,
   Client as PostgresClient,
   Pool as PostgresPool,
-} from 'pg'
+} from 'pg';
 
 import {
   Connection,
@@ -13,13 +13,13 @@ import {
   ConnectionError,
   Engine,
   Pool,
-} from 'db-ts'
+} from 'db-ts';
 
-import { toConnectionError } from './error'
+import { toConnectionError } from './error';
 
 const toPostgresConnectionConfig = (
   connectionConfig: ConnectionConfig
-): PostgresConnectionConfig => connectionConfig
+): PostgresConnectionConfig => connectionConfig;
 
 export const createPostgresEngine = (
   connectionConfig: ConnectionConfig
@@ -31,26 +31,27 @@ export const createPostgresEngine = (
       createConnection: () => createConnection(postgresConnectionConfig),
       createPool: () => createPool(postgresConnectionConfig),
     })
-  )
+  );
 
 export const createConnection = (
   postgresConnectionConfig: PostgresConnectionConfig
 ): TE.TaskEither<ConnectionError, Connection> =>
   pipe(
     TE.tryCatch(async () => {
-      const client = new PostgresClient(postgresConnectionConfig)
-      await client.connect()
-      return client
+      const client = new PostgresClient(postgresConnectionConfig);
+      await client.connect();
+      return client;
     }, toConnectionError('Unknown error')),
     TE.map(postgresClientToConnection)
-  )
+  );
 
 export const createPool = (
   postgresConnectionConfig: PostgresConnectionConfig
-): Pool => pipe(new PostgresPool(postgresConnectionConfig), postgresPoolToPool)
+): Pool => pipe(new PostgresPool(postgresConnectionConfig), postgresPoolToPool);
 
 const postgresClientToConnection = (
   postgresClient: PostgresClient
-): Connection => hole()
+): Connection => pipe(postgresClient, hole());
 
-const postgresPoolToPool = (postgresPool: PostgresPool): Pool => hole()
+const postgresPoolToPool = (postgresPool: PostgresPool): Pool =>
+  pipe(postgresPool, hole());

@@ -1,10 +1,10 @@
-import { Config } from '@jest/types'
+import { Config } from '@jest/types';
 
 const config: Config.InitialOptions = {
   verbose: true,
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
-}
+};
 
-export default config
+export default config;

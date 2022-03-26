@@ -1,24 +1,24 @@
-import { pipe } from 'fp-ts/function'
+import { pipe } from 'fp-ts/function';
 
 export interface DatabaseError {
-  type: string
+  type: string;
 }
 
 export interface ConnectionError extends DatabaseError {
-  type: 'ConnectionError'
+  type: 'ConnectionError';
 }
 
 export interface ConnectionCloseError extends DatabaseError {
-  type: 'ConnectionCloseError'
+  type: 'ConnectionCloseError';
 }
 
 export interface QueryError extends DatabaseError {
-  type: 'QueryError'
+  type: 'QueryError';
 }
 
 export interface ResultOneError extends DatabaseError {
-  type: 'ResultOneError'
-  detail: 'MoreRowsReturned' | 'NoRowReturned'
+  type: 'ResultOneError';
+  detail: 'MoreRowsReturned' | 'NoRowReturned';
 }
 
 type DatabaseErrorFromType<T> = T extends ConnectionError['type']
@@ -29,14 +29,14 @@ type DatabaseErrorFromType<T> = T extends ConnectionError['type']
   ? QueryError
   : T extends ResultOneError['type']
   ? ResultOneError
-  : unknown
+  : unknown;
 
 const createError = <T>(type: T): DatabaseErrorFromType<T> =>
-  ({ type } as DatabaseErrorFromType<T>)
+  ({ type } as DatabaseErrorFromType<T>);
 
 export const createConnectionError = createError(
   'ConnectionError' as ConnectionError['type']
-)
+);
 
 export const createResultOneError = (
   detail: ResultOneError['detail']
@@ -44,4 +44,4 @@ export const createResultOneError = (
   pipe('ResultOneError' as ResultOneError['type'], createError, obj => ({
     ...obj,
     detail,
-  }))
+  }));
