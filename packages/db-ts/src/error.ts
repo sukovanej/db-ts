@@ -2,6 +2,7 @@ import { pipe } from 'fp-ts/function';
 
 export interface DatabaseError {
   type: string;
+  driverError: unknown;
 }
 
 export interface ConnectionError extends DatabaseError {
@@ -38,7 +39,8 @@ const createError = <T>(type: T): DatabaseErrorFromType<T> =>
   ({ type } as DatabaseErrorFromType<T>);
 
 export const createConnectionCloseError = (
-  detail: ConnectionCloseError['detail']
+  detail: ConnectionCloseError['detail'],
+  driverError: unknown = null,
 ): ConnectionCloseError =>
   pipe(
     'ConnectionCloseError' as ConnectionCloseError['type'],
@@ -46,27 +48,36 @@ export const createConnectionCloseError = (
     obj => ({
       ...obj,
       detail,
+      driverError,
     })
   );
 
 export const createConnectionError = (
-  detail: ConnectionError['detail']
+  detail: ConnectionError['detail'],
+  driverError: unknown = null,
 ): ConnectionError =>
   pipe('ConnectionError' as ConnectionError['type'], createError, obj => ({
     ...obj,
     detail,
+    driverError,
   }));
 
 export const createResultOneError = (
-  detail: ResultOneError['detail']
+  detail: ResultOneError['detail'],
+  driverError: unknown = null,
 ): ResultOneError =>
   pipe('ResultOneError' as ResultOneError['type'], createError, obj => ({
     ...obj,
     detail,
+    driverError,
   }));
 
-export const createQueryError = (detail: QueryError['detail']): QueryError =>
+export const createQueryError = (
+  detail: QueryError['detail'],
+  driverError: unknown = null,
+): QueryError =>
   pipe('QueryError' as QueryError['type'], createError, obj => ({
     ...obj,
     detail,
+    driverError,
   }));

@@ -5,7 +5,7 @@ import * as D from 'io-ts/Decoder';
 import { pipe, constant } from 'fp-ts/function';
 import { createResultOneError, ResultOneError } from './error';
 
-export type Row = { [column: string]: any };
+export type Row = { [column: string]: unknown };
 
 export interface FieldDef {
   name: string;
@@ -67,7 +67,7 @@ export const one = (result: Result): E.Either<ResultOneError, Row> =>
   );
 
 /**
- * Return a first row.
+ * Decode the result using a decoder.
  *
  * @category: combinator
  */

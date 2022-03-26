@@ -21,6 +21,14 @@ const DUMMY_CONFIG: DB.ConnectionConfig = {
   password: 'password',
 };
 
+
+export const tap =
+  <A>(f: (a: A) => void): ((a: A) => A) =>
+  (a: A) => {
+    f(a);
+    return a;
+  };
+
 const TEST_TABLE = 'test_table';
 
 const CREATE_TEST_TABLE_QUERY = `
@@ -35,28 +43,36 @@ describe('Postgres engine', () => {
   describe('createPostgresEngine', () => {
     it('creates a truthy object (dummy test)', () =>
       pipe(DUMMY_CONFIG, DE.createPostgresEngine, engine =>
-        expect(engine).toBeTruthy()
+        expect(engine).not.toBeNull()
       ));
   });
 
   it('is possible to create a table', async () => {
-    await TE.bracket(
-      pipe(TEST_DATABASE_CONFIG, DE.createPostgresEngine, DB.createConnection),
-      flow(
-        TE.of,
-        TE.chainFirst(DB.query(CREATE_TEST_TABLE_QUERY)),
-        TE.chain(DB.query(`DROP TABLE ${TEST_TABLE};`)),
-        TE.mapLeft((e) => fail(`Failed on ${JSON.stringify(e)}`)),
+    await pipe(
+      TE.bracket(
+        pipe(
+          TEST_DATABASE_CONFIG,
+          DE.createPostgresEngine,
+          DB.createConnection,
+        ),
+        flow(
+          DB.queryAndPass(CREATE_TEST_TABLE_QUERY),
+          TE.chain(DB.query(`DROP TABLE ${TEST_TABLE};`)),
+        ),
+        (connection, result) =>
+          pipe(
+            connection,
+            DB.queryAndPass(`DROP TABLE IF EXISTS ${TEST_TABLE};`),
+            TE.chainW(DB.closeConnection),
+            TE.apSecond(TE.fromEither(result)),
+            TE.map(constant(undefined)),
+          )
       ),
-      (connection, result) => pipe(
-        connection,
-        TE.of,
-        TE.chainFirst(DB.query(`DROP TABLE IF EXISTS ${TEST_TABLE};`)),
-        TE.chainW(DB.closeConnection),
-        TE.apSecond(TE.fromEither(result)),
-        TE.mapLeft((e) => fail(`Failed on ${JSON.stringify(e)}`)),
-        TE.map(constant(undefined)),
-      )
+      TE.map((i) => console.log("DEBUG:", i)),
+      TE.mapLeft(e => {
+        console.error(e)
+        return fail(JSON.stringify(e));
+      }),
     )();
   });
 });

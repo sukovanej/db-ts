@@ -10,7 +10,12 @@ import {
 
 import * as DB from 'db-ts';
 
-import { toCloseError, toConnectionError, toQueryError } from './error';
+import {
+  toCloseError,
+  toConnectionError,
+  toQueryError,
+  toTransactionError,
+} from './error';
 
 const toPostgresConnectionConfig = (
   connectionConfig: DB.ConnectionConfig
@@ -51,8 +56,36 @@ const postgresClientToConnection = (
   pipe(postgresClient, client => ({
     query: clientToQueryFn(client),
     close: clientToCloseFn(client),
+    beginTransaction: () => beginTransaction(client),
+    commitTransaction: () => commitTransaction(client),
+    rollbackTransaction: () => rollbackTransaction(client),
   }));
 
+const queryAndReturnVoid = (
+  postgresClient: PostgresClient,
+  query: string
+): TE.TaskEither<DB.DatabaseError, void> =>
+  pipe(
+    TE.tryCatch(() => postgresClient.query(query), toTransactionError),
+    TE.map(undefined)
+  );
+
+const beginTransaction = (
+  postgresClient: PostgresClient
+): ReturnType<DB.Connection['beginTransaction']> =>
+  queryAndReturnVoid(postgresClient, 'BEGIN;');
+
+const commitTransaction = (
+  postgresClient: PostgresClient
+): ReturnType<DB.Connection['commitTransaction']> =>
+  queryAndReturnVoid(postgresClient, 'COMMIT;');
+
+const rollbackTransaction = (
+  postgresClient: PostgresClient
+): ReturnType<DB.Connection['rollbackTransaction']> =>
+  queryAndReturnVoid(postgresClient, 'ROLLBACK;');
+
+// TODO: implement
 const postgresPoolToPool = (postgresPool: PostgresPool): DB.Pool =>
   pipe(postgresPool, hole());
 

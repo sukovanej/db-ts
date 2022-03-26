@@ -17,6 +17,7 @@
     "build-core": "yarn workspace db-ts run build",
     "build-postgres": "yarn workspace db-ts-postgres run build",
     "build-all": "yarn workspaces foreach run build",
+    "test-postgres": "yarn workspace db-ts-postgres run test",
     "test-all": "yarn workspaces foreach run test",
     "test-all:ci": "yarn workspaces foreach run test:ci",
     "release": "release-it",
