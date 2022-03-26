@@ -5,7 +5,7 @@ import * as D from 'io-ts/Decoder';
 import { pipe, constant } from 'fp-ts/function';
 import { createResultOneError, ResultOneError } from './error';
 
-export type Row = any;
+export type Row = object;
 
 export interface Result {
   rows: Row[],
@@ -31,7 +31,7 @@ export const all = (result: Result): Row[] => result.rows
   * @category combinator
   */
 export const first = (result: Result): O.Option<Row> => 
-  pipe(result.rows, A.init);
+  pipe(result.rows, A.head);
 
 /**
   * Return exactly one row. If the result set is empty, `NoRowReturned` error is
