@@ -10,13 +10,16 @@
   "repository": "https://github.com/sukovanej/db-ts",
   "author": "Milan Suk",
   "dependencies": {
-    "db-ts": "../db-ts"
+    "db-ts": "../db-ts",
+    "fp-ts": "^2.11.9",
+    "io-ts": "^2.2.16"
   },
   "peerDependencies": {
     "pg": "^8.7.3"
   },
   "devDependencies": {
     "@types/jest": "^27.4.1",
+    "@types/node": "^17.0.23",
     "@types/pg": "^8.6.5",
     "jest": "^27.5.1",
     "pg": "^8.7.3",
