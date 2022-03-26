@@ -15,5 +15,6 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install --immutable
+      - run: yarn build-all
       - run: yarn test-all:ci
       - run: yarn lint
