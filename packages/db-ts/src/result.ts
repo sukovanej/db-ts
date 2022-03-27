@@ -3,7 +3,11 @@ import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import * as D from 'io-ts/Decoder';
 import { pipe, constant } from 'fp-ts/function';
-import { createResultOneError, ResultOneError } from './error';
+import {
+  createResultOneError,
+  DatabaseError,
+  resultFirstError,
+} from './error';
 
 export type Row = { [column: string]: unknown };
 
@@ -54,7 +58,7 @@ export const first = (result: Result): O.Option<Row> =>
  *
  * @category combinator
  */
-export const one = (result: Result): E.Either<ResultOneError, Row> =>
+export const one = (result: Result): E.Either<DatabaseError, Row> =>
   pipe(
     result.rows,
     A.matchLeft(
@@ -72,6 +76,51 @@ export const one = (result: Result): E.Either<ResultOneError, Row> =>
  * @category: combinator
  */
 export const as =
-  <A, R extends Row | Row[]>(decoder: D.Decoder<R, A>) =>
+  <A, R extends Row>(decoder: D.Decoder<R, A>) =>
   (result: R): E.Either<D.DecodeError, A> =>
     pipe(result, decoder.decode);
+
+/**
+ * Decode the result using a decoder.
+ *
+ * @category: combinator
+ */
+export const asList =
+  <A>(decoder: D.Decoder<Row, A>) =>
+  (result: Row[]): E.Either<D.DecodeError, A[]> =>
+    pipe(result, D.array(decoder).decode);
+
+/**
+ * Ensure there is one row in the result and decode it.
+ *
+ * @category: combinator
+ */
+export const oneAs =
+  <A>(decoder: D.Decoder<Row, A>) =>
+  (result: Result): E.Either<D.DecodeError | DatabaseError, A> =>
+    pipe(result, one, E.chainW(as(decoder)));
+
+/**
+ * Take the first row in the result and decode it.
+ *
+ * @category: combinator
+ */
+export const firstAs =
+  <A>(decoder: D.Decoder<Row, A>) =>
+  (result: Result): E.Either<D.DecodeError | DatabaseError, A> =>
+    pipe(
+      result,
+      first,
+      E.fromOption(constant(resultFirstError)),
+      E.chainW(as(decoder))
+    );
+
+/**
+ * Take the first row in the result and decode it.
+ *
+ * @category: combinator
+ */
+export const allAs =
+  <A>(decoder: D.Decoder<Row, A>) =>
+  (result: Result): E.Either<D.DecodeError, A[]> =>
+    pipe(result, all, asList(decoder));

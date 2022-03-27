@@ -25,6 +25,10 @@ export interface ResultOneError extends DatabaseError {
   detail: 'MoreRowsReturned' | 'NoRowReturned';
 }
 
+export interface ResultFirstError extends DatabaseError {
+  type: 'ResultFirstError';
+}
+
 type DatabaseErrorFromType<T> = T extends ConnectionError['type']
   ? ConnectionError
   : T extends ConnectionCloseError['type']
@@ -33,10 +37,16 @@ type DatabaseErrorFromType<T> = T extends ConnectionError['type']
   ? QueryError
   : T extends ResultOneError['type']
   ? ResultOneError
+  : T extends ResultFirstError['type']
+  ? ResultFirstError
   : unknown;
 
-const createError = <T>(type: T): DatabaseErrorFromType<T> =>
+export const createError = <T>(type: T): DatabaseErrorFromType<T> =>
   ({ type } as DatabaseErrorFromType<T>);
+
+export const resultFirstError = createError(
+  'ResultFirstError' as ResultFirstError['type']
+);
 
 export const createConnectionCloseError = (
   detail: ConnectionCloseError['detail'],
