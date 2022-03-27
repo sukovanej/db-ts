@@ -9,6 +9,7 @@ import * as DE from '../src/engine';
 import { existsQueryCodec } from './codecs';
 import {
   CREATE_TEST_TABLE_QUERY,
+  DROP_TEST_TABLE_QUERY,
   TEST_DATABASE_CONFIG,
   TEST_TABLE,
   TEST_TABLE_EXISTS_QUERY,
@@ -39,11 +40,12 @@ export const isolatedTest = <A, E>(
     TEST_DATABASE_ENGINE,
     DB.withConnection(connection =>
       TE.bracket(
-        pipe(connection, DB.beginTransaction),
+        pipe(connection, DB.beginTransaction, TE.mapLeft(reportFail)),
         flow(f, TE.mapLeft(reportFail)),
         DB.rollbackTransaction
       )
-    )
+    ),
+    TE.mapLeft(reportFail)
   );
 
 export const withTestTable = <A, E>(
@@ -58,5 +60,16 @@ export const logExistingTestTable = flow(
     exists
       ? CO.warn(`Testing table ${TEST_TABLE} already exists, gonna delete it!`)
       : IO.of(undefined)
+  )
+);
+
+export const ensureTestTableDoesnExist = pipe(
+  TEST_DATABASE_ENGINE,
+  DB.withConnection(
+    flow(
+      TE.of,
+      TE.chainFirst(logExistingTestTable),
+      TE.chain(DB.query(DROP_TEST_TABLE_QUERY))
+    )
   )
 );

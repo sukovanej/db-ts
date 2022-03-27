@@ -7,31 +7,14 @@ import * as DE from '../src/engine';
 
 import { testTableCodec } from './codecs';
 import {
+  ensureTestTableDoesnExist,
   isolatedTest,
-  logExistingTestTable,
-  TEST_DATABASE_ENGINE,
   withTestTable,
 } from './utils';
-import {
-  CREATE_TEST_TABLE_QUERY,
-  DROP_TEST_TABLE_QUERY,
-  DUMMY_CONFIG,
-  TEST_TABLE,
-} from './constants';
+import { CREATE_TEST_TABLE_QUERY, DUMMY_CONFIG, TEST_TABLE } from './constants';
 
 describe('Postgres engine', () => {
-  beforeAll(async () => {
-    await pipe(
-      TEST_DATABASE_ENGINE,
-      DB.withConnection(
-        flow(
-          TE.of,
-          TE.chainFirst(logExistingTestTable),
-          TE.chain(DB.query(DROP_TEST_TABLE_QUERY))
-        )
-      )
-    )();
-  });
+  beforeAll(async () => await ensureTestTableDoesnExist());
 
   describe('createPostgresEngine', () => {
     it('creates a truthy object (dummy test)', () =>

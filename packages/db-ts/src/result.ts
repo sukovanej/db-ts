@@ -3,11 +3,7 @@ import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import * as D from 'io-ts/Decoder';
 import { pipe, constant } from 'fp-ts/function';
-import {
-  createResultOneError,
-  DatabaseError,
-  resultFirstError,
-} from './error';
+import { createResultOneError, DatabaseError, resultFirstError } from './error';
 
 export type Row = { [column: string]: unknown };
 
