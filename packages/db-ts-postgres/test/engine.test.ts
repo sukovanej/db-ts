@@ -1,9 +1,10 @@
-import * as DB from 'db-ts';
-
 import { pipe, flow, constant } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 
+import * as DB from 'db-ts';
+
 import * as DE from '../src/engine';
+
 
 const TEST_DATABASE_CONFIG: DB.ConnectionConfig = {
   host: 'localhost',
@@ -20,14 +21,6 @@ const DUMMY_CONFIG: DB.ConnectionConfig = {
   database: 'database',
   password: 'password',
 };
-
-
-export const tap =
-  <A>(f: (a: A) => void): ((a: A) => A) =>
-  (a: A) => {
-    f(a);
-    return a;
-  };
 
 const TEST_TABLE = 'test_table';
 
@@ -68,9 +61,8 @@ describe('Postgres engine', () => {
             TE.map(constant(undefined)),
           )
       ),
-      TE.map((i) => console.log("DEBUG:", i)),
       TE.mapLeft(e => {
-        console.error(e)
+        console.error("ERROR: ", e)
         return fail(JSON.stringify(e));
       }),
     )();
