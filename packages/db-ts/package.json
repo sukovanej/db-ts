@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "jest",
-    "test:ci": "jest --ci --reporters='default'"
+    "test:ci": "jest --ci --reporters='default'",
+    "check-circular-dependencies": "madge src/index.ts --ts-config tsconfig.json --circular"
   },
   "devDependencies": {
     "@types/jest": "^27.4.1",
@@ -21,6 +22,7 @@
     "fp-ts": "^2.11.9",
     "io-ts": "^2.2.16",
     "jest": "^27.5.1",
+    "madge": "^5.0.1",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3"

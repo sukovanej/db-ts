@@ -13,18 +13,23 @@ export const toConnectionError =
   (defaultMessage: string) =>
   (error: unknown): ConnectionError =>
     isPostgresDatabaseError(error)
-      ? createConnectionError(error.message)
-      : createConnectionError(defaultMessage);
+      ? createConnectionError(error.message, error)
+      : createConnectionError(defaultMessage, error);
 
 export const toQueryError = (error: unknown): QueryError =>
   isPostgresDatabaseError(error)
-    ? createQueryError(error.message)
-    : createQueryError('Unknown');
+    ? createQueryError(error.message, error)
+    : createQueryError('Unknown', error);
 
 export const toCloseError = (error: unknown): ConnectionCloseError =>
   isPostgresDatabaseError(error)
-    ? createConnectionCloseError(error.message)
-    : createConnectionCloseError('Unknown');
+    ? createConnectionCloseError(error.message, error)
+    : createConnectionCloseError('Unknown', error);
+
+export const toTransactionError = (error: unknown): ConnectionCloseError =>
+  isPostgresDatabaseError(error)
+    ? createConnectionCloseError(error.message, error)
+    : createConnectionCloseError('Unknown', error);
 
 export const isPostgresDatabaseError = (
   error: unknown
