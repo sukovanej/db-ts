@@ -66,12 +66,13 @@ const postgresClientToConnection = (
     rollbackTransaction: () => rollbackTransaction(client),
   }));
 
-const queryAndReturnVoid = (query: string) =>
+const queryAndReturnVoid =
+  (query: string) =>
   (postgresClient: PostgresClient): TE.TaskEither<DB.DatabaseError, void> =>
-  pipe(
-    TE.tryCatch(() => postgresClient.query(query), toTransactionError),
-    TE.map(undefined)
-  );
+    pipe(
+      TE.tryCatch(() => postgresClient.query(query), toTransactionError),
+      TE.map(undefined)
+    );
 
 const beginTransaction = queryAndReturnVoid('BEGIN;');
 const commitTransaction = queryAndReturnVoid('COMMIT;');

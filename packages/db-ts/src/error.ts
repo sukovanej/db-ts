@@ -40,7 +40,7 @@ const createError = <T>(type: T): DatabaseErrorFromType<T> =>
 
 export const createConnectionCloseError = (
   detail: ConnectionCloseError['detail'],
-  driverError: unknown = null,
+  driverError: unknown = null
 ): ConnectionCloseError =>
   pipe(
     'ConnectionCloseError' as ConnectionCloseError['type'],
@@ -54,7 +54,7 @@ export const createConnectionCloseError = (
 
 export const createConnectionError = (
   detail: ConnectionError['detail'],
-  driverError: unknown = null,
+  driverError: unknown = null
 ): ConnectionError =>
   pipe('ConnectionError' as ConnectionError['type'], createError, obj => ({
     ...obj,
@@ -64,7 +64,7 @@ export const createConnectionError = (
 
 export const createResultOneError = (
   detail: ResultOneError['detail'],
-  driverError: unknown = null,
+  driverError: unknown = null
 ): ResultOneError =>
   pipe('ResultOneError' as ResultOneError['type'], createError, obj => ({
     ...obj,
@@ -74,7 +74,7 @@ export const createResultOneError = (
 
 export const createQueryError = (
   detail: QueryError['detail'],
-  driverError: unknown = null,
+  driverError: unknown = null
 ): QueryError =>
   pipe('QueryError' as QueryError['type'], createError, obj => ({
     ...obj,

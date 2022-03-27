@@ -5,7 +5,6 @@ import * as DB from 'db-ts';
 
 import * as DE from '../src/engine';
 
-
 const TEST_DATABASE_CONFIG: DB.ConnectionConfig = {
   host: 'localhost',
   port: 5432,
@@ -46,11 +45,11 @@ describe('Postgres engine', () => {
         pipe(
           TEST_DATABASE_CONFIG,
           DE.createPostgresEngine,
-          DB.createConnection,
+          DB.createConnection
         ),
         flow(
           DB.queryAndPass(CREATE_TEST_TABLE_QUERY),
-          TE.chain(DB.query(`DROP TABLE ${TEST_TABLE};`)),
+          TE.chain(DB.query(`DROP TABLE ${TEST_TABLE};`))
         ),
         (connection, result) =>
           pipe(
@@ -58,13 +57,13 @@ describe('Postgres engine', () => {
             DB.queryAndPass(`DROP TABLE IF EXISTS ${TEST_TABLE};`),
             TE.chainW(DB.closeConnection),
             TE.apSecond(TE.fromEither(result)),
-            TE.map(constant(undefined)),
+            TE.map(constant(undefined))
           )
       ),
       TE.mapLeft(e => {
-        console.error("ERROR: ", e)
+        console.error('ERROR: ', e);
         return fail(JSON.stringify(e));
-      }),
+      })
     )();
   });
 });

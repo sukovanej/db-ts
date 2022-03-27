@@ -29,6 +29,10 @@ export interface ConnectionInTransaction extends Connection {
   _tag: 'InTransaction';
 }
 
+const toConnectionInTransaction = (
+  connection: Connection
+): ConnectionInTransaction => ({ ...connection, _tag: 'InTransaction' });
+
 /**
  * Configuration needed to connect to the database.
  *
@@ -81,7 +85,7 @@ export const beginTransaction = (
 ): TE.TaskEither<DatabaseError, ConnectionInTransaction> =>
   pipe(
     connection.beginTransaction(),
-    TE.apSecond(TE.of({ ...connection, _tag: 'InTransaction' }))
+    TE.apSecond(pipe(connection, toConnectionInTransaction, TE.of))
   );
 
 /**
