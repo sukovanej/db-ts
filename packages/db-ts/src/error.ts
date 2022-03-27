@@ -25,6 +25,10 @@ export interface ResultOneError extends DatabaseError {
   detail: 'MoreRowsReturned' | 'NoRowReturned';
 }
 
+export interface ResultFirstError extends DatabaseError {
+  type: 'ResultFirstError';
+}
+
 type DatabaseErrorFromType<T> = T extends ConnectionError['type']
   ? ConnectionError
   : T extends ConnectionCloseError['type']
@@ -33,14 +37,20 @@ type DatabaseErrorFromType<T> = T extends ConnectionError['type']
   ? QueryError
   : T extends ResultOneError['type']
   ? ResultOneError
+  : T extends ResultFirstError['type']
+  ? ResultFirstError
   : unknown;
 
-const createError = <T>(type: T): DatabaseErrorFromType<T> =>
+export const createError = <T>(type: T): DatabaseErrorFromType<T> =>
   ({ type } as DatabaseErrorFromType<T>);
+
+export const resultFirstError = createError(
+  'ResultFirstError' as ResultFirstError['type']
+);
 
 export const createConnectionCloseError = (
   detail: ConnectionCloseError['detail'],
-  driverError: unknown = null,
+  driverError: unknown = null
 ): ConnectionCloseError =>
   pipe(
     'ConnectionCloseError' as ConnectionCloseError['type'],
@@ -54,7 +64,7 @@ export const createConnectionCloseError = (
 
 export const createConnectionError = (
   detail: ConnectionError['detail'],
-  driverError: unknown = null,
+  driverError: unknown = null
 ): ConnectionError =>
   pipe('ConnectionError' as ConnectionError['type'], createError, obj => ({
     ...obj,
@@ -64,7 +74,7 @@ export const createConnectionError = (
 
 export const createResultOneError = (
   detail: ResultOneError['detail'],
-  driverError: unknown = null,
+  driverError: unknown = null
 ): ResultOneError =>
   pipe('ResultOneError' as ResultOneError['type'], createError, obj => ({
     ...obj,
@@ -74,7 +84,7 @@ export const createResultOneError = (
 
 export const createQueryError = (
   detail: QueryError['detail'],
-  driverError: unknown = null,
+  driverError: unknown = null
 ): QueryError =>
   pipe('QueryError' as QueryError['type'], createError, obj => ({
     ...obj,

@@ -34,8 +34,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "jest",
-    "test:ci": "jest --ci --reporters='default'",
+    "test": "jest --runInBand",
+    "test:ci": "jest --runInBand --ci --reporters='default'",
     "check-circular-dependencies": "madge src/index.ts --ts-config tsconfig.json --circular"
   }
 }

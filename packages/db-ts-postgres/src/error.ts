@@ -26,11 +26,6 @@ export const toCloseError = (error: unknown): ConnectionCloseError =>
     ? createConnectionCloseError(error.message, error)
     : createConnectionCloseError('Unknown', error);
 
-export const toTransactionError = (error: unknown): ConnectionCloseError =>
-  isPostgresDatabaseError(error)
-    ? createConnectionCloseError(error.message, error)
-    : createConnectionCloseError('Unknown', error);
-
 export const isPostgresDatabaseError = (
   error: unknown
 ): error is PostgresDatabaseError => {
