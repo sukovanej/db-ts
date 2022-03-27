@@ -17,10 +17,11 @@ import {
   toTransactionError,
 } from './error';
 
-const toPostgresConnectionConfig = (
-  connectionConfig: DB.ConnectionConfig
-): PostgresConnectionConfig => connectionConfig;
-
+/**
+ * Create an instance of `Engine` for the PostgreSQL.
+ *
+ * @category constructors
+ */
 export const createPostgresEngine = (
   connectionConfig: DB.ConnectionConfig
 ): DB.Engine =>
@@ -33,7 +34,11 @@ export const createPostgresEngine = (
     })
   );
 
-export const createConnection = (
+const toPostgresConnectionConfig = (
+  connectionConfig: DB.ConnectionConfig
+): PostgresConnectionConfig => connectionConfig;
+
+const createConnection = (
   postgresConnectionConfig: PostgresConnectionConfig
 ): TE.TaskEither<DB.DatabaseError, DB.Connection> =>
   pipe(
@@ -45,7 +50,7 @@ export const createConnection = (
     TE.map(postgresClientToConnection)
   );
 
-export const createPool = (
+const createPool = (
   postgresConnectionConfig: PostgresConnectionConfig
 ): DB.Pool =>
   pipe(new PostgresPool(postgresConnectionConfig), postgresPoolToPool);
@@ -61,29 +66,16 @@ const postgresClientToConnection = (
     rollbackTransaction: () => rollbackTransaction(client),
   }));
 
-const queryAndReturnVoid = (
-  postgresClient: PostgresClient,
-  query: string
-): TE.TaskEither<DB.DatabaseError, void> =>
+const queryAndReturnVoid = (query: string) =>
+  (postgresClient: PostgresClient): TE.TaskEither<DB.DatabaseError, void> =>
   pipe(
     TE.tryCatch(() => postgresClient.query(query), toTransactionError),
     TE.map(undefined)
   );
 
-const beginTransaction = (
-  postgresClient: PostgresClient
-): ReturnType<DB.Connection['beginTransaction']> =>
-  queryAndReturnVoid(postgresClient, 'BEGIN;');
-
-const commitTransaction = (
-  postgresClient: PostgresClient
-): ReturnType<DB.Connection['commitTransaction']> =>
-  queryAndReturnVoid(postgresClient, 'COMMIT;');
-
-const rollbackTransaction = (
-  postgresClient: PostgresClient
-): ReturnType<DB.Connection['rollbackTransaction']> =>
-  queryAndReturnVoid(postgresClient, 'ROLLBACK;');
+const beginTransaction = queryAndReturnVoid('BEGIN;');
+const commitTransaction = queryAndReturnVoid('COMMIT;');
+const rollbackTransaction = queryAndReturnVoid('ROLLBACK;');
 
 // TODO: implement
 const postgresPoolToPool = (postgresPool: PostgresPool): DB.Pool =>
