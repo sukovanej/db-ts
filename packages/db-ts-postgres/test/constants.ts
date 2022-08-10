@@ -1,6 +1,7 @@
-import * as DB from 'db-ts';
+import * as DB from 'db-ts/src';
+import { PostgresConnectionConfig } from '../src/engine';
 
-export const TEST_DATABASE_CONFIG: DB.ConnectionConfig = {
+export const TEST_DATABASE_CONFIG: PostgresConnectionConfig = {
   host: 'localhost',
   port: 5432,
   user: 'test',
@@ -8,7 +9,7 @@ export const TEST_DATABASE_CONFIG: DB.ConnectionConfig = {
   password: 'test',
 };
 
-export const DUMMY_CONFIG: DB.ConnectionConfig = {
+export const DUMMY_CONFIG: PostgresConnectionConfig = {
   host: 'host',
   port: 1234,
   user: 'user',
@@ -18,7 +19,7 @@ export const DUMMY_CONFIG: DB.ConnectionConfig = {
 
 export const TEST_TABLE = 'db_ts_test_table';
 
-export const CREATE_TEST_TABLE_QUERY = `
+export const CREATE_TEST_TABLE_QUERY = DB.sql`
   CREATE TABLE ${TEST_TABLE} (
     id      integer,
     name    varchar(40),
@@ -26,9 +27,9 @@ export const CREATE_TEST_TABLE_QUERY = `
   );
 `;
 
-export const DROP_TEST_TABLE_QUERY = `DROP TABLE IF EXISTS ${TEST_TABLE};`;
+export const DROP_TEST_TABLE_QUERY = DB.sql`DROP TABLE IF EXISTS ${TEST_TABLE};`;
 
-export const TEST_TABLE_EXISTS_QUERY = `
+export const TEST_TABLE_EXISTS_QUERY = DB.sql`
   SELECT EXISTS (
     SELECT FROM information_schema.tables WHERE table_name = '${TEST_TABLE}'
   );

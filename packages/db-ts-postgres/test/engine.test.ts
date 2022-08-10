@@ -1,7 +1,9 @@
 import { pipe, flow } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 
-import * as DB from 'db-ts';
+// TODO: fix
+import * as DB from 'db-ts/src';
+import * as DBA from 'db-ts/src/connectionAction';
 
 import * as DE from '../src/engine';
 
@@ -25,9 +27,9 @@ describe('Postgres engine', () => {
 
   it('is possible to create a table', async () => {
     await isolatedTest(
-      flow(
-        DB.queryAndPass(CREATE_TEST_TABLE_QUERY),
-        TE.chainFirst(DB.query(`SELECT * FROM ${TEST_TABLE}`))
+      pipe(
+        DBA.query(CREATE_TEST_TABLE_QUERY),
+        DBA.chainFirst(() => DBA.query(DB.sql`SELECT * FROM ${TEST_TABLE}`))
       )
     )();
   });

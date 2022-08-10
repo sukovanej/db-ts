@@ -1,9 +1,11 @@
-import { pipe, flow } from 'fp-ts/function';
+import { pipe, flow, apply } from 'fp-ts/function';
 import * as TE from 'fp-ts/TaskEither';
 import * as CO from 'fp-ts/Console';
 import * as IO from 'fp-ts/IO';
 
-import * as DB from 'db-ts';
+// TODO: fix build
+import * as DB from 'db-ts/src';
+import * as DBA from 'db-ts/src/connectionAction';
 import * as DE from '../src/engine';
 
 import { existsQueryCodec } from './codecs';
@@ -34,24 +36,18 @@ export const TEST_DATABASE_ENGINE = DE.createPostgresEngine(
  * Run test in a transaction that is always rollbacked at the end.
  */
 export const isolatedTest = <A, E>(
-  f: (connection: DB.Connection) => TE.TaskEither<E, A>
+  fa: DBA.ConnectionAction<DB.ConnectionOpened, DB.ConnectionOpened, E, A>
 ): TE.TaskEither<DB.DatabaseError | E, A> =>
   pipe(
-    TEST_DATABASE_ENGINE,
-    DB.withConnection(connection =>
-      TE.bracket(
-        pipe(connection, DB.beginTransaction, TE.mapLeft(reportFail)),
-        flow(f, TE.mapLeft(reportFail)),
-        DB.rollbackTransaction
-      )
-    ),
-    TE.mapLeft(reportFail)
+    DBA.openConnection,
+    DBA.ichainW(() => fa),
+    apply(TEST_DATABASE_ENGINE.createConnection)
   );
 
 export const withTestTable = <A, E>(
-  f: (connection: DB.Connection) => TE.TaskEither<E, A>
+  f: DBA.ConnectionAction<DB.ConnectionOpened, DB.ConnectionOpened, E, A>
 ): TE.TaskEither<DB.DatabaseError | E, A> =>
-  isolatedTest(flow(DB.queryAndPass(CREATE_TEST_TABLE_QUERY), TE.chainW(f)));
+  isolatedTest(flow(DBA.query(CREATE_TEST_TABLE_QUERY), TE.chainW(f)));
 
 export const logExistingTestTable = flow(
   DB.query(TEST_TABLE_EXISTS_QUERY),
