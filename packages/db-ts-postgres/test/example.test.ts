@@ -1,31 +1,26 @@
-import { pipe, flow } from 'fp-ts/function';
-import * as TE from 'fp-ts/TaskEither';
+import { pipe } from 'fp-ts/function';
 
 import * as DB from 'db-ts';
+import * as DBA from 'db-ts/src/connectionAction';
 
 import { ensureTestTableDoesnExist, withTestTable } from './utils';
 import { TEST_TABLE } from './constants';
 import { testTableCodec, TestTable } from './codecs';
 
-const makeExampleRepository = (connection: DB.Connection) => ({
+const exampleRepository = ({
   getOne: (id: number) =>
     pipe(
-      connection,
-      DB.query(`SELECT * FROM "${TEST_TABLE}" WHERE id = '${id}' FOR UPDATE;`),
-      TE.chainEitherK(DB.oneAs(testTableCodec))
+      DBA.query(DB.sql`SELECT * FROM "${TEST_TABLE}" WHERE id = '${id.toString()}' FOR UPDATE;`),
+      DBA.chainEitherK(DB.oneAs(testTableCodec)),
     ),
   getList: () =>
     pipe(
-      connection,
-      DB.query(`SELECT * FROM "${TEST_TABLE}"`),
-      TE.chainEitherKW(DB.allAs(testTableCodec))
+      DBA.query(DB.sql`SELECT * FROM "${TEST_TABLE}"`),
+      DBA.chainEitherKW(DB.allAs(testTableCodec)),
     ),
   persist: (testTable: TestTable) =>
-    pipe(
-      connection,
-      DB.query(
-        `INSERT INTO "${TEST_TABLE}" (id, name) VALUES (${testTable.id}, '${testTable.name}')`
-      )
+    DBA.query(
+      DB.sql`INSERT INTO "${TEST_TABLE}" (id, name) VALUES (${testTable.id.toString()}, '${testTable.name}')`
     ),
 });
 
@@ -34,34 +29,20 @@ describe('Postgres engine', () => {
 
   it('getOne after persist', async () =>
     await withTestTable(
-      flow(
-        makeExampleRepository,
-        flow(
-          TE.of,
-          TE.chainFirst(repository =>
-            repository.persist({ id: 1, name: 'milan' })
-          )
-        ),
-        TE.chain(repository => repository.getOne(1)),
-        TE.map(item => expect(item).toStrictEqual({ id: 1, name: 'milan' }))
+      pipe(
+        exampleRepository.persist({ id: 1, name: 'milan' }),
+        DBA.chain(() => exampleRepository.getOne(1)),
+        DBA.map(item => expect(item).toStrictEqual({ id: 1, name: 'milan' }))
       )
     )());
 
   it('getList after persist', async () =>
     await withTestTable(
-      flow(
-        makeExampleRepository,
-        flow(
-          TE.of,
-          TE.chainFirst(repository =>
-            repository.persist({ id: 1, name: 'milan' })
-          ),
-          TE.chainFirst(repository =>
-            repository.persist({ id: 2, name: 'matej' })
-          )
-        ),
-        TE.chain(repository => repository.getList()),
-        TE.map(item =>
+      pipe(
+        exampleRepository.persist({ id: 1, name: 'milan' }),
+        DBA.chainW(() => exampleRepository.persist({ id: 2, name: 'matej' })),
+        DBA.chainW(() => exampleRepository.getList()),
+        DBA.map(item =>
           expect(item).toStrictEqual([
             { id: 1, name: 'milan' },
             { id: 2, name: 'matej' },

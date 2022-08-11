@@ -5,7 +5,14 @@ import {
   ConnectionOpenedInTransaction,
 } from './connection';
 import * as TE from 'fp-ts/TaskEither';
-import { ConnectionError, QueryError } from './error';
+import * as IO from 'fp-ts/IO';
+import * as FE from 'fp-ts/FromEither';
+import * as M from 'fp-ts/Monad';
+import * as C from 'fp-ts/Chain';
+import * as F from 'fp-ts/Functor';
+import * as A from 'fp-ts/Apply';
+import * as E from 'fp-ts/Either'
+import { ConnectionError, QueryError, UnexpectedDatabaseError } from './error';
 import { pipe, flow } from 'fp-ts/function';
 import { Query } from './query';
 import { Result } from './result';
@@ -26,6 +33,12 @@ export const URI = 'ConnectionAction';
 
 export type URI = typeof URI;
 
+// non-pipable
+
+const _map: F.Functor3<URI>['map'] = (fa, f) => pipe(fa, map(f))
+const _apPar: A.Apply3<URI>['ap'] = (fab, fa) => pipe(fab, ap(fa))
+const _chain: C.Chain3<URI>['chain'] = (ma, f) => pipe(ma, chain(f))
+
 // combinators
 
 export const map =
@@ -36,28 +49,10 @@ export const map =
       TE.map(([a, c]) => [f(a), c])
     );
 
-export const chain =
-  <I, E, A, B>(f: (a: A) => ConnectionAction<I, I, E, B>) =>
-  (fa: ConnectionAction<I, I, E, A>): ConnectionAction<I, I, E, B> =>
-    ichain(f)(fa);
-
-export const chainFirst =
-  <I, E, A, B>(f: (a: A) => ConnectionAction<I, I, E, B>) =>
-  (fa: ConnectionAction<I, I, E, A>): ConnectionAction<I, I, E, A> =>
-    chainFirstW(f)(fa);
-
-export const chainFirstW =
-  <I, E1, A, B>(f: (a: A) => ConnectionAction<I, I, E1, B>) =>
-  <E2>(fa: ConnectionAction<I, I, E2, A>): ConnectionAction<I, I, E1 | E2, A> =>
-    flow(
-      fa,
-      TE.chainFirstW(([a, c]) => f(a)(c))
-    );
-
-export const ichain =
-  <M, O, E, A, B>(f: (a: A) => ConnectionAction<M, O, E, B>) =>
-  <I>(fa: ConnectionAction<I, M, E, A>): ConnectionAction<I, O, E, B> =>
-    ichainW(f)(fa);
+export const ap = <I, E, A>(
+  fa: ConnectionAction<I, I, E, A>
+) => <B>(fab: ConnectionAction<I, I, E, (a: A) => B>): ConnectionAction<I, I, E, B> =>
+  (c) => pipe(fab(c), TE.ap(fa(c)), TE.map((a) => [a, c]));
 
 export const ichainW =
   <M, O, E1, A, B>(f: (a: A) => ConnectionAction<M, O, E1, B>) =>
@@ -68,6 +63,89 @@ export const ichainW =
       fa,
       TE.chainW(([a, c]) => f(a)(c))
     );
+
+export const ichain: <M, O, E, A, B>(
+  f: (a: A) => ConnectionAction<M, O, E, B>
+) => <I>(fa: ConnectionAction<I, M, E, A>) => ConnectionAction<I, O, E, B> =
+  ichainW;
+
+export const chainW: <O, E1, A, B>(
+  f: (a: A) => ConnectionAction<O, O, E1, B>
+) => <E2, I>(
+  fa: ConnectionAction<I, O, E2, A>
+) => ConnectionAction<I, O, E1 | E2, B> = ichainW;
+
+export const chain: <O, E, A, B>(
+  f: (a: A) => ConnectionAction<O, O, E, B>
+) => <I>(fa: ConnectionAction<I, O, E, A>) => ConnectionAction<I, O, E, B> =
+  chainW;
+
+//export const apSecond =
+//  <I, E1, A, B>(fb: ConnectionAction<I, I, E1, B>) =>
+//  <O, E2>(fa: ConnectionAction<I, O, E2, A>): ConnectionAction<I, O, E1 | E2, B> =>
+//    connection => pipe(
+//      fa(connection),
+//      TE.apSecond(fb(connection))
+//    )
+
+export const chainFirstW =
+  <I, E1, A, B>(f: (a: A) => ConnectionAction<I, I, E1, B>) =>
+  <O, E2>(
+    fa: ConnectionAction<I, O, E2, A>
+  ): ConnectionAction<I, O, E1 | E2, A> =>
+    flow(
+      fa,
+      TE.chainFirstW(([a, c]) => f(a)(c as unknown as Connection<I>))
+    );
+
+export const chainFirst: <I, E, A, B>(
+  f: (a: A) => ConnectionAction<I, I, E, B>
+) => (fa: ConnectionAction<I, I, E, A>) => ConnectionAction<I, I, E, A> =
+  chainFirstW;
+
+export const chainEitherKW = <E1, A, B>(
+  f: (a: A) => E.Either<E1, B>
+) => <I, O, E2>(ma: ConnectionAction<I, O, E2, A>): ConnectionAction<I, O, E1 | E2, B> =>
+  (c) => pipe(ma(c), TE.chainEitherKW(([a, c]) => pipe(f(a), E.map((a) => [a, c]))));
+
+export const chainEitherK: <E, A, B>(
+  f: (a: A) => E.Either<E, B>
+) => <I, O>(ma: ConnectionAction<I, O, E, A>) => ConnectionAction<I, O, E, B> =
+  chainEitherKW;
+
+export const chainIOK = <A, B>(
+  f: (a: A) => IO.IO<B>
+) => <I, O, E>(ma: ConnectionAction<I, O, E, A>): ConnectionAction<I, O, E, B> =>
+  (c) => pipe(ma(c), TE.chainIOK(([a, c]) => pipe(f(a), IO.map((a) => [a, c]))));
+
+// destructors
+
+export const execConnectionAction =
+  <I>(connection: Connection<I>) =>
+  <O, E, A>(
+    connectionAction: ConnectionAction<I, O, E, A>
+  ): TE.TaskEither<E, A> =>
+    pipe(
+      connectionAction(connection),
+      TE.map(([a, _]) => a)
+    );
+
+export const execConnectionActionAsVoid =
+  <I>(connection: Connection<I>) =>
+  <O, E, A>(
+    connectionAction: ConnectionAction<I, O, E, A>
+  ): TE.TaskEither<E, void> =>
+    pipe(
+      connectionAction(connection),
+      TE.map(() => undefined)
+    );
+
+// constructors
+
+export const right = <I,  E = never, A = never>(a: A): ConnectionAction<I, I, E, A> =>
+  (c) => pipe(TE.of<E, A>(a), TE.map((a) => [a, c]));
+
+export const of: <I, E = never, A = never>(a: A) => ConnectionAction<I, I, E, A> = right;
 
 export const openConnection: ConnectionAction<
   ConnectionNotOpened,
@@ -80,9 +158,62 @@ export const openConnection: ConnectionAction<
     TE.map(c => [undefined, c])
   );
 
-export declare function query(query: Query): ConnectionAction<ConnectionOpened, ConnectionOpened, QueryError, Result>;
-export declare function query(query: Query): ConnectionAction<ConnectionOpenedInTransaction, ConnectionOpenedInTransaction, QueryError, Result>;
+export function query(
+  query: Query
+): ConnectionAction<ConnectionOpened, ConnectionOpened, QueryError, Result>;
 
-export function query<S extends ConnectionOpened | ConnectionOpenedInTransaction>(query: Query): ConnectionAction<S, S, QueryError, Result> { 
+export function query(
+  query: Query
+): ConnectionAction<
+  ConnectionOpenedInTransaction,
+  ConnectionOpenedInTransaction,
+  QueryError,
+  Result
+>;
+
+export function query<
+  S extends ConnectionOpened | ConnectionOpenedInTransaction
+>(query: Query): ConnectionAction<S, S, QueryError, Result> {
   return connection => connection.query(query);
+}
+
+export const closeConnection: ConnectionAction<
+  ConnectionOpened,
+  ConnectionNotOpened,
+  UnexpectedDatabaseError,
+  void
+> = connection =>
+  pipe(
+    connection.close(),
+    TE.map(c => [undefined, c])
+  );
+
+// Natural transformations
+
+export const fromEither: FE.FromEither3<URI>['fromEither'] = e => c =>
+  pipe(
+    TE.fromEither(e),
+    TE.map(a => [a, c])
+  );
+
+// Instances
+
+export const FromEither: FE.FromEither3<URI> = {
+  URI,
+  fromEither
+}
+
+export const Chain: C.Chain3<URI> = {
+  URI,
+  map: _map,
+  ap: _apPar,
+  chain: _chain
+}
+
+export const Monad: M.Monad3<URI> = {
+  URI,
+  map: _map,
+  ap: _apPar,
+  chain: _chain,
+  of
 }

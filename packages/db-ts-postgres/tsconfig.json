@@ -5,9 +5,9 @@
     "sourceMap": true,
     "composite": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "."
   },
-  "include": ["src"],
+  "include": ["src", "test"],
   "references": [
     { "path": "../db-ts" }
   ]

@@ -1,8 +1,6 @@
 import { pipe, flow } from 'fp-ts/function';
-import * as TE from 'fp-ts/TaskEither';
 
-// TODO: fix
-import * as DB from 'db-ts/src';
+import * as DB from 'db-ts';
 import * as DBA from 'db-ts/src/connectionAction';
 
 import * as DE from '../src/engine';
@@ -37,13 +35,13 @@ describe('Postgres engine', () => {
   describe('basic operators', () => {
     it('insert and select', async () => {
       await withTestTable(
-        flow(
-          DB.queryAndPass(
-            `INSERT INTO "${TEST_TABLE}" (id, name) VALUES (1, 'milan')`
+        pipe(
+          DBA.query(
+            DB.sql`INSERT INTO "${TEST_TABLE}" (id, name) VALUES (1, 'milan')`
           ),
-          TE.chain(DB.query(`SELECT * FROM "${TEST_TABLE}"`)),
-          TE.chainEitherKW(flow(DB.all, DB.asList(testTableCodec))),
-          TE.map(r => {
+          DBA.chain(() => DBA.query(DB.sql`SELECT * FROM "${TEST_TABLE}"`)),
+          DBA.chainEitherKW(flow(DB.all, DB.asList(testTableCodec))),
+          DBA.map(r => {
             expect(r).toHaveLength(1);
             expect(r[0]).toStrictEqual({ id: 1, name: 'milan' });
           })
@@ -53,10 +51,10 @@ describe('Postgres engine', () => {
 
     it('select returns nothing for an empty table', async () => {
       await withTestTable(
-        flow(
-          DB.query(`SELECT * FROM "${TEST_TABLE}"`),
-          TE.chainEitherKW(flow(DB.all, DB.asList(testTableCodec))),
-          TE.map(r => expect(r).toHaveLength(0))
+        pipe(
+          DBA.query(DB.sql`SELECT * FROM "${TEST_TABLE}"`),
+          DBA.chainEitherKW(flow(DB.all, DB.asList(testTableCodec))),
+          DBA.map(r => expect(r).toHaveLength(0))
         )
       )();
     });

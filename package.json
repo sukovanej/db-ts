@@ -22,6 +22,7 @@
     "test-all:ci": "yarn workspaces foreach run test:ci",
     "release": "release-it",
     "lint": "eslint --ignore-path .eslintignore --ext .ts .",
-    "lint:fix": "prettier --ignore-path .eslintignore --write ."
+    "lint:fix": "prettier --ignore-path .eslintignore --write .",
+    "lint:ts": "tsc -p tsconfig.json --noEmit"
   }
 }
