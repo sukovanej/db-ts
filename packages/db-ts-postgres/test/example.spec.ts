@@ -1,28 +1,32 @@
 import { pipe } from 'fp-ts/function';
 
-import * as DB from 'db-ts';
+import * as DB from 'db-ts/src';
 import * as DBA from 'db-ts/src/connectionAction';
 
 import { ensureTestTableDoesnExist, withTestTable } from './utils';
 import { TEST_TABLE } from './constants';
 import { testTableCodec, TestTable } from './codecs';
 
-const exampleRepository = ({
+const exampleRepository = {
   getOne: (id: number) =>
     pipe(
-      DBA.query(DB.sql`SELECT * FROM "${TEST_TABLE}" WHERE id = '${id.toString()}' FOR UPDATE;`),
-      DBA.chainEitherK(DB.oneAs(testTableCodec)),
+      DBA.query(
+        DB.sql`SELECT * FROM "${TEST_TABLE}" WHERE id = '${id.toString()}' FOR UPDATE;`
+      ),
+      DBA.chainEitherK(DB.oneAs(testTableCodec))
     ),
   getList: () =>
     pipe(
       DBA.query(DB.sql`SELECT * FROM "${TEST_TABLE}"`),
-      DBA.chainEitherKW(DB.allAs(testTableCodec)),
+      DBA.chainEitherKW(DB.allAs(testTableCodec))
     ),
   persist: (testTable: TestTable) =>
     DBA.query(
-      DB.sql`INSERT INTO "${TEST_TABLE}" (id, name) VALUES (${testTable.id.toString()}, '${testTable.name}')`
+      DB.sql`INSERT INTO "${TEST_TABLE}" (id, name) VALUES (${testTable.id.toString()}, '${
+        testTable.name
+      }')`
     ),
-});
+};
 
 describe('Postgres engine', () => {
   beforeAll(async () => await ensureTestTableDoesnExist());

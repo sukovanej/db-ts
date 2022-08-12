@@ -7,12 +7,12 @@ import {
   ConnectionConfig,
   Client as PostgresClient,
   Pool as PostgresPool,
-  QueryResult as PostgresResult,
+  QueryResult as PostgresQueryResult,
 } from 'pg';
 
 import * as DB from 'db-ts';
 
-import { toCloseError, toConnectionError, toQueryError } from './error';
+import { toConnectionError, toQueryError } from './error';
 
 export type PostgresConnectionConfig = ConnectionConfig;
 
@@ -33,17 +33,20 @@ export const createPostgresEngine = (
   connectionConfig: PostgresConnectionConfig,
   engineConfig: PostgresEngineConfig = defaultPostgresEngineConfig
 ): DB.Engine => ({
-  createConnection: pipe(
-    createClient(connectionConfig),
-    postgresClientToConnection(engineConfig)
-  ),
+  createConnection: () =>
+    pipe(
+      createClient(connectionConfig),
+      postgresClientToConnection(engineConfig)
+    ),
   createPool: () => createPool(connectionConfig, engineConfig),
 });
 
 const createClient = (postgresConnectionConfig: PostgresConnectionConfig) =>
   new PostgresClient(postgresConnectionConfig);
 
-const openConnection = (client: PostgresClient) =>
+const openConnection = (
+  client: PostgresClient
+): TE.TaskEither<DB.ConnectionError, PostgresClient> =>
   pipe(
     TE.tryCatch(async () => {
       await client.connect();
@@ -65,35 +68,40 @@ const postgresClientToConnection =
   (postgresClient: PostgresClient): DB.Connection<DB.ConnectionNotOpened> => {
     // TODO: do better :(
 
-    const connection = {
-      connect: () => openConnection(postgresClient),
+    const connection: DB.Connection<DB.ConnectionNotOpened> = {
+      _S: undefined as unknown as DB.ConnectionNotOpened,
+      connect: () =>
+        pipe(
+          openConnection(postgresClient),
+          TE.map(() => DB.unsafeConnectionTo(connection))
+        ),
       close: () =>
         pipe(
-          clientToCloseFn(postgresClient),
-          TE.map(_ => connection)
+          clientToCloseFn(postgresClient, DB.unsafeConnectionTo(connection)),
+          TE.map(() => DB.unsafeConnectionTo(connection))
         ),
       query: (query: DB.Query) =>
         pipe(
           postgresClient,
           queryOnPostgresClient(query, engineConfig),
-          TE.map(r => [r, connection])
+          TE.map(r => [r, DB.unsafeConnectionTo(connection)])
         ),
       beginTransaction: () =>
         pipe(
           beginTransaction(postgresClient, engineConfig),
-          TE.map(a => [a, connection])
+          TE.map(() => DB.unsafeConnectionTo(connection))
         ),
       commitTransaction: () =>
         pipe(
           commitTransaction(postgresClient, engineConfig),
-          TE.map(a => [a, connection])
+          TE.map(() => DB.unsafeConnectionTo(connection))
         ),
       rollbackTransaction: () =>
         pipe(
           rollbackTransaction(postgresClient, engineConfig),
-          TE.map(a => [a, connection])
+          TE.map(() => DB.unsafeConnectionTo(connection))
         ),
-    } as unknown as DB.Connection<DB.ConnectionNotOpened>;
+    };
 
     return connection;
   };
@@ -122,10 +130,11 @@ const queryAndReturnVoid =
   (
     postgresClient: PostgresClient,
     engineConfig: PostgresEngineConfig
-  ): TE.TaskEither<DB.DatabaseError, void> =>
+  ): TE.TaskEither<DB.UnexpectedDatabaseError, void> =>
     pipe(
       postgresClient,
       queryOnPostgresClient(query, engineConfig),
+      TE.mapLeft(({ detail }) => DB.createUnexpectedDatabaseError(detail)),
       TE.map(() => undefined)
     );
 
@@ -135,8 +144,20 @@ const rollbackTransaction = queryAndReturnVoid('ROLLBACK;');
 
 // Result object conversion
 
-const toResult = (postgresResult: PostgresResult<any>): DB.Result =>
-  postgresResult;
+const toResult = (postgresResult: PostgresQueryResult<any>): DB.Result =>
+  postgresResult as unknown as DB.Result;
 
-const clientToCloseFn = (client: PostgresClient) =>
-  TE.tryCatch(() => client.end(), toCloseError);
+const clientToCloseFn = (
+  client: PostgresClient,
+  connection: DB.Connection<DB.ConnectionOpened>
+): TE.TaskEither<
+  DB.UnexpectedDatabaseError,
+  DB.Connection<DB.ConnectionNotOpened>
+> =>
+  pipe(
+    TE.tryCatch(
+      () => client.end(),
+      e => DB.createUnexpectedDatabaseError(JSON.stringify(e))
+    ),
+    TE.map(() => connection as unknown as DB.Connection<DB.ConnectionNotOpened>)
+  );

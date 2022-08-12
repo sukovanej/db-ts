@@ -1,7 +1,7 @@
 import { pipe, flow } from 'fp-ts/function';
 
 import * as DB from 'db-ts';
-import * as DBA from 'db-ts/src/connectionAction';
+import * as DBA from 'db-ts/lib/connectionAction';
 
 import * as DE from '../src/engine';
 
@@ -26,7 +26,7 @@ describe('Postgres engine', () => {
   it('is possible to create a table', async () => {
     await isolatedTest(
       pipe(
-        DBA.query(CREATE_TEST_TABLE_QUERY),
+        DBA.query<DB.ConnectionOpenedInTransaction>(CREATE_TEST_TABLE_QUERY),
         DBA.chainFirst(() => DBA.query(DB.sql`SELECT * FROM ${TEST_TABLE}`))
       )
     )();
@@ -36,7 +36,7 @@ describe('Postgres engine', () => {
     it('insert and select', async () => {
       await withTestTable(
         pipe(
-          DBA.query(
+          DBA.query<DB.ConnectionOpenedInTransaction>(
             DB.sql`INSERT INTO "${TEST_TABLE}" (id, name) VALUES (1, 'milan')`
           ),
           DBA.chain(() => DBA.query(DB.sql`SELECT * FROM "${TEST_TABLE}"`)),
@@ -52,7 +52,9 @@ describe('Postgres engine', () => {
     it('select returns nothing for an empty table', async () => {
       await withTestTable(
         pipe(
-          DBA.query(DB.sql`SELECT * FROM "${TEST_TABLE}"`),
+          DBA.query<DB.ConnectionOpenedInTransaction>(
+            DB.sql`SELECT * FROM "${TEST_TABLE}"`
+          ),
           DBA.chainEitherKW(flow(DB.all, DB.asList(testTableCodec))),
           DBA.map(r => expect(r).toHaveLength(0))
         )

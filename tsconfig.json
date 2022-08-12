@@ -1,10 +1,6 @@
-{  
-  "references": [
-    { "path": "./packages/db-ts" },
-    { "path": "./packages/db-ts-postgres" }
-  ],
-  "exclude": [
-    "packages/**/tests/**",
-    "packages/**/dist/**"
-  ]
+{
+  "extends": "./tsconfig.spec.json",
+  "compilerOptions": {
+    "disableSourceOfProjectReferenceRedirect": true
+  },
 }

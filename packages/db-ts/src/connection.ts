@@ -15,14 +15,17 @@ export interface ConnectionOpenedInTransaction {
   readonly ConnectionNotOpened: unique symbol;
 }
 
+export type ConnectionState =
+  | ConnectionNotOpened
+  | ConnectionOpened
+  | ConnectionOpenedInTransaction;
+
 /**
  * Represents a potential connection to the database.
  *
  * @category model
  */
 export interface Connection<S = ConnectionOpened> {
-  readonly _S: S;
-
   readonly connect: (
     this: Connection<ConnectionNotOpened>
   ) => TE.TaskEither<ConnectionError, Connection<ConnectionOpened>>;
@@ -45,9 +48,16 @@ export interface Connection<S = ConnectionOpened> {
 
   readonly commitTransaction: (
     this: Connection<ConnectionOpenedInTransaction>
-  ) => TE.TaskEither<QueryError, Connection<ConnectionOpened>>;
+  ) => TE.TaskEither<UnexpectedDatabaseError, Connection<ConnectionOpened>>;
 
   readonly rollbackTransaction: (
     this: Connection<ConnectionOpenedInTransaction>
   ) => TE.TaskEither<UnexpectedDatabaseError, Connection<ConnectionOpened>>;
 }
+
+export const unsafeConnectionTo = <
+  S1 extends ConnectionState,
+  S2 extends ConnectionState
+>(
+  connection: Connection<S1>
+): Connection<S2> => connection as unknown as Connection<S2>;

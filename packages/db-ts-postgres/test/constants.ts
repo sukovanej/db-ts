@@ -1,4 +1,4 @@
-import * as DB from 'db-ts/src';
+import * as DB from 'db-ts';
 import { PostgresConnectionConfig } from '../src/engine';
 
 export const TEST_DATABASE_CONFIG: PostgresConnectionConfig = {

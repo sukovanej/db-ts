@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "types": ["jest", "node"]
+  },
+  "files": [],
+  "references": [
+    { "path": "./packages/db-ts/tsconfig.spec.json" },
+    { "path": "./packages/db-ts-postgres/tsconfig.spec.json" }
+  ]
+}

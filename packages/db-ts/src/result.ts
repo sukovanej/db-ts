@@ -3,7 +3,7 @@ import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import * as D from 'io-ts/Decoder';
 import { pipe, constant } from 'fp-ts/function';
-import { createResultOneError, DatabaseError, resultFirstError } from './error';
+import { createResultOneError, DatabaseError } from './error';
 
 export type Row = { [column: string]: unknown };
 
@@ -82,8 +82,8 @@ export const as =
  * @category: combinator
  */
 export const asList =
-  <A>(decoder: D.Decoder<Row, A>) =>
-  (result: Row[]): E.Either<D.DecodeError, A[]> =>
+  <A>(decoder: D.Decoder<unknown, A>) =>
+  (result: readonly Row[]): E.Either<D.DecodeError, A[]> =>
     pipe(result, D.array(decoder).decode);
 
 /**
@@ -101,15 +101,15 @@ export const oneAs =
  *
  * @category: combinator
  */
-export const firstAs =
-  <A>(decoder: D.Decoder<Row, A>) =>
-  (result: Result): E.Either<D.DecodeError | DatabaseError, A> =>
-    pipe(
-      result,
-      first,
-      E.fromOption(constant(resultFirstError)),
-      E.chainW(as(decoder))
-    );
+//export const firstAs =
+//  <A>(decoder: D.Decoder<Row, A>) =>
+//  (result: Result): E.Either<D.DecodeError | DatabaseError, A> =>
+//    pipe(
+//      result,
+//      first,
+//      E.fromOption(constant(resultFirstError)),
+//      E.chainW(as(decoder))
+//    );
 
 /**
  * Take the first row in the result and decode it.
@@ -117,6 +117,6 @@ export const firstAs =
  * @category: combinator
  */
 export const allAs =
-  <A>(decoder: D.Decoder<Row, A>) =>
+  <A>(decoder: D.Decoder<unknown, A>) =>
   (result: Result): E.Either<D.DecodeError, A[]> =>
     pipe(result, all, asList(decoder));

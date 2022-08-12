@@ -2,8 +2,8 @@ import { pipe } from 'fp-ts/function';
 import * as O from 'fp-ts/Option';
 import * as E from 'fp-ts/Either';
 
-import * as DR from '../src/result';
-import { createResultOneError } from '../src/error';
+import * as DR from 'db-ts/src/result';
+import { createResultOneError } from 'db-ts/src/error';
 
 describe('Result', () => {
   describe('all', () => {

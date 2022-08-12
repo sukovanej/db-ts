@@ -1,5 +1,3 @@
-import { pipe } from 'fp-ts/function';
-
 export interface ConnectionError {
   type: 'ConnectionError';
   detail: string;
@@ -37,61 +35,19 @@ export type DatabaseError =
   | ResultFirstError
   | UnexpectedDatabaseError;
 
-type DatabaseErrorFromType<T> = T extends ConnectionError['type']
-  ? ConnectionError
-  : T extends ConnectionCloseError['type']
-  ? ConnectionCloseError
-  : T extends QueryError['type']
-  ? QueryError
-  : T extends ResultOneError['type']
-  ? ResultOneError
-  : T extends ResultFirstError['type']
-  ? ResultFirstError
-  : unknown;
-
-export const createError = <T>(type: T): DatabaseErrorFromType<T> =>
-  ({ type } as DatabaseErrorFromType<T>);
+export const createError =
+  <T extends DatabaseError['type']>(type: T) =>
+  (detail: string): Extract<DatabaseError, { type: T }> =>
+    ({ type, detail } as Extract<DatabaseError, { type: T }>);
 
 export const resultFirstError = createError(
   'ResultFirstError' as ResultFirstError['type']
 );
 
-export const createConnectionCloseError = (
-  detail: ConnectionCloseError['detail'],
-  driverError: unknown = null
-): ConnectionCloseError =>
-  pipe('ConnectionCloseError' as const, createError, obj => ({
-    ...obj,
-    detail,
-    driverError,
-  }));
-
-export const createConnectionError = (
-  detail: ConnectionError['detail'],
-  driverError: unknown = null
-): ConnectionError =>
-  pipe(createError('ConnectionError' as const), obj => ({
-    ...obj,
-    detail,
-    driverError,
-  }));
-
-export const createResultOneError = (
-  detail: ResultOneError['detail'],
-  driverError: unknown = null
-): ResultOneError =>
-  pipe(createError('ResultOneError' as const), obj => ({
-    ...obj,
-    detail,
-    driverError,
-  }));
-
-export const createQueryError = (
-  detail: QueryError['detail'],
-  driverError: unknown = null
-): QueryError =>
-  pipe(createError('QueryError' as const), obj => ({
-    ...obj,
-    detail,
-    driverError,
-  }));
+export const createConnectionCloseError = createError('ConnectionCloseError');
+export const createConnectionError = createError('ConnectionError');
+export const createResultOneError = createError('ResultOneError');
+export const createUnexpectedDatabaseError = createError(
+  'UnexpectedDatabaseError'
+);
+export const createQueryError = createError('QueryError');
