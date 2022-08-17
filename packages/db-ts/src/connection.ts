@@ -26,6 +26,8 @@ export type ConnectionState =
  * @category model
  */
 export interface Connection<S = ConnectionOpened> {
+  readonly _S: S;
+
   readonly connect: (
     this: Connection<ConnectionNotOpened>
   ) => TE.TaskEither<ConnectionError, Connection<ConnectionOpened>>;

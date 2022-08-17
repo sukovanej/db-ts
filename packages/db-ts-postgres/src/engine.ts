@@ -13,6 +13,7 @@ import {
 import * as DB from 'db-ts';
 
 import { toConnectionError, toQueryError } from './error';
+import { unsafeConnectionTo } from 'db-ts';
 
 export type PostgresConnectionConfig = ConnectionConfig;
 
@@ -145,7 +146,7 @@ const rollbackTransaction = queryAndReturnVoid('ROLLBACK;');
 // Result object conversion
 
 const toResult = (postgresResult: PostgresQueryResult<any>): DB.Result =>
-  postgresResult as unknown as DB.Result;
+  postgresResult;
 
 const clientToCloseFn = (
   client: PostgresClient,
@@ -159,5 +160,5 @@ const clientToCloseFn = (
       () => client.end(),
       e => DB.createUnexpectedDatabaseError(JSON.stringify(e))
     ),
-    TE.map(() => connection as unknown as DB.Connection<DB.ConnectionNotOpened>)
+    TE.map(() => unsafeConnectionTo(connection))
   );
