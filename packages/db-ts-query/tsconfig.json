@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "include": ["src", "test"],
+  "references": [
+    { "path": "../db-ts" }
+  ]
+}

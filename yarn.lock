@@ -2531,6 +2531,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"db-ts-query@workspace:packages/db-ts-query":
+  version: 0.0.0-use.local
+  resolution: "db-ts-query@workspace:packages/db-ts-query"
+  peerDependencies:
+    fp-ts: ^2.11.9
+    io-ts: ^2.2.16
+  languageName: unknown
+  linkType: soft
+
 "db-ts@*, db-ts@workspace:packages/db-ts":
   version: 0.0.0-use.local
   resolution: "db-ts@workspace:packages/db-ts"

@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.spec.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./lib"
+  },
+  "include": ["./src/**/*", "./tests/**/*"],
+  "references": [
+    { "path": "../db-ts/tsconfig.spec.json" }
+  ]
+}

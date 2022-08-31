@@ -1,0 +1,13 @@
+{
+  "name": "db-ts-query",
+  "version": "0.0.1",
+  "description": "Query builder for db-ts",
+  "main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
+  "repository": "https://github.com/sukovanej/db-ts",
+  "author": "Milan Suk",
+  "peerDependencies": {
+    "fp-ts": "^2.11.9",
+    "io-ts": "^2.2.16"
+  }
+}
