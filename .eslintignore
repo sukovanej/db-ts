@@ -7,4 +7,4 @@
 *.md
 *.yml
 dist
-*/lib/*.js
+packages/*/lib/*.js
