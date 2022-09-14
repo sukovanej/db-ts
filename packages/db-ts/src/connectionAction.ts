@@ -12,11 +12,15 @@ import * as M from 'fp-ts/Monad';
 import * as C from 'fp-ts/Chain';
 import * as F from 'fp-ts/Functor';
 import * as A from 'fp-ts/Apply';
+import * as Ap from 'fp-ts/Applicative';
 import * as E from 'fp-ts/Either';
+import { Pointed3 } from 'fp-ts/lib/Pointed';
 import { ConnectionError, QueryError, UnexpectedDatabaseError } from './error';
 import { pipe, flow } from 'fp-ts/function';
 import { Query } from './query';
 import { Result } from './result';
+import { MonadIO3 } from 'fp-ts/lib/MonadIO';
+import { MonadThrow3 } from 'fp-ts/lib/MonadThrow';
 
 // model
 
@@ -38,6 +42,11 @@ export type URI = typeof URI;
 
 const _map: F.Functor3<URI>['map'] = (fa, f) => pipe(fa, map(f));
 const _apPar: A.Apply3<URI>['ap'] = (fab, fa) => pipe(fab, ap(fa));
+const _apSeq: A.Apply3<URI>['ap'] = (fab, fa) =>
+  pipe(
+    fab,
+    chain(f => pipe(fa, map(f)))
+  );
 const _chain: C.Chain3<URI>['chain'] = (ma, f) => pipe(ma, chain(f));
 
 // combinators
@@ -110,29 +119,6 @@ export const orElse: <O, E, A>(
 ) => <I>(fa: ConnectionAction<I, O, E, A>) => ConnectionAction<I, O, E, A> =
   orElseW;
 
-//export const apSecond =
-//  <I, E1, A, B>(fb: ConnectionAction<I, I, E1, B>) =>
-//  <O, E2>(fa: ConnectionAction<I, O, E2, A>): ConnectionAction<I, O, E1 | E2, B> =>
-//    connection => pipe(
-//      fa(connection),
-//      TE.apSecond(fb(connection))
-//    )
-
-export const chainFirstW =
-  <I, E1, A, B>(f: (a: A) => ConnectionAction<I, I, E1, B>) =>
-  <O, E2>(
-    fa: ConnectionAction<I, O, E2, A>
-  ): ConnectionAction<I, O, E1 | E2, A> =>
-    flow(
-      fa,
-      TE.chainFirstW(([a, c]) => f(a)(c as unknown as Connection<I>))
-    );
-
-export const chainFirst: <I, E, A, B>(
-  f: (a: A) => ConnectionAction<I, I, E, B>
-) => (fa: ConnectionAction<I, I, E, A>) => ConnectionAction<I, I, E, A> =
-  chainFirstW;
-
 export const chainEitherKW =
   <E1, A, B>(f: (a: A) => E.Either<E1, B>) =>
   <I, O, E2>(
@@ -154,19 +140,7 @@ export const chainEitherK: <E, A, B>(
 ) => <I, O>(ma: ConnectionAction<I, O, E, A>) => ConnectionAction<I, O, E, B> =
   chainEitherKW;
 
-export const chainIOK =
-  <A, B>(f: (a: A) => IO.IO<B>) =>
-  <I, O, E>(ma: ConnectionAction<I, O, E, A>): ConnectionAction<I, O, E, B> =>
-  c =>
-    pipe(
-      ma(c),
-      TE.chainIOK(([a, c]) =>
-        pipe(
-          f(a),
-          IO.map(a => [a, c])
-        )
-      )
-    );
+export const throwError: MonadThrow3<URI>['throwError'] = e => () => TE.left(e);
 
 // destructors
 
@@ -283,6 +257,37 @@ export const fromIO: FIO.FromIO3<URI>['fromIO'] =
 
 // Instances
 
+export const Pointed: Pointed3<URI> = {
+  URI,
+  of,
+};
+
+export const ApplyPar: A.Apply3<URI> = {
+  URI,
+  map: _map,
+  ap: _apPar,
+};
+
+export const ApplicativePar: Ap.Applicative3<URI> = {
+  URI,
+  map: _map,
+  ap: _apPar,
+  of,
+};
+
+export const ApplySeq: A.Apply3<URI> = {
+  URI,
+  map: _map,
+  ap: _apSeq,
+};
+
+export const ApplicativeSeq: Ap.Applicative3<URI> = {
+  URI,
+  map: _map,
+  ap: _apSeq,
+  of,
+};
+
 export const FromEither: FE.FromEither3<URI> = {
   URI,
   fromEither,
@@ -307,3 +312,41 @@ export const Monad: M.Monad3<URI> = {
   chain: _chain,
   of,
 };
+
+export const MonadIO: MonadIO3<URI> = {
+  URI,
+  map: _map,
+  ap: _apPar,
+  chain: _chain,
+  of,
+  fromIO,
+};
+
+export const MonadThrow: MonadThrow3<URI> = {
+  URI,
+  map: _map,
+  ap: _apPar,
+  chain: _chain,
+  of,
+  throwError,
+};
+
+// combinators
+
+export const apSecond = A.apSecond(ApplyPar);
+
+export const chainIOK: <A, B>(
+  f: (a: A) => IO.IO<B>
+) => <I, E>(ma: ConnectionAction<I, I, E, A>) => ConnectionAction<I, I, E, B> =
+  FIO.chainIOK(FromIO, Chain);
+
+export const chainFirst: <I, E, A, B>(
+  f: (a: A) => ConnectionAction<I, I, E, B>
+) => <O>(fa: ConnectionAction<I, O, E, A>) => ConnectionAction<I, O, E, A> =
+  C.chainFirst(Monad);
+
+export const chainFirstW: <I, E1, A, B>(
+  f: (a: A) => ConnectionAction<I, I, E1, B>
+) => <O, E2>(
+  fa: ConnectionAction<I, O, E2, A>
+) => ConnectionAction<I, O, E1 | E2, A> = chainFirst as any;
