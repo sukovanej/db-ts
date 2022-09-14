@@ -1,76 +1,35 @@
 import { pipe } from 'fp-ts/lib/function';
-
-export type ColumnType = 'TEXT' | 'INT';
-
-export type ColumnName = string; // TODO: branded type
-
-export interface ColumnSpec {
-  type: ColumnType;
-  nullable?: boolean;
-}
-
-export const addColumn =
-  <N extends ColumnName, S extends ColumnSpec, C extends TableColumns>(
-    name: Exclude<N, keyof C>,
-    spec: S
-  ) =>
-  (
-    table: Table<C>
-  ): Table<{ readonly [K in N | keyof C]: K extends keyof C ? C[K] : S }> => ({
-    ...table,
-    columns: { ...table.columns, [name]: spec } as {
-      readonly [K in N | keyof C]: K extends keyof C ? C[K] : S;
-    },
-  });
-
-export type TableColumns = Record<ColumnName, ColumnSpec>;
-
-export interface Table<C extends TableColumns> {
-  readonly name: string;
-  readonly columns: C;
-}
-
-/**
- * createTable
- *
- * ```typescript
- * const table = pipe(
- *   createTable('my_table'),
- *   addColumn('id', { type: 'INT' }),
- *   addColumn('name', { type: 'TEXT' })
- * );
- * ```
- */
-export const createTable = (name: string): Table<{}> => ({ name, columns: {} });
+import { columns } from './columns';
+import { addColumn, createTable, Table, TableColumns } from './table';
 
 // SELECT
 
-type SelectQueryColumn<C> = keyof C | { name: keyof C; alias: string };
+type SelectQueryColumn<C extends TableColumns> = C[keyof C];
 
 export interface SelectQuery<
   T extends Table<C>,
   C extends TableColumns,
-  SC extends SelectQueryColumn<C>[]
+  SC extends readonly SelectQueryColumn<C>[]
 > {
-  readonly table: T['name'];
+  readonly table: T;
   readonly columns: SC;
 }
 
-export const select = <C extends TableColumns, SC extends (keyof C)[]>(
+export const select = <
+  C extends TableColumns,
+  SC extends readonly SelectQueryColumn<C>[]
+>(
   table: Table<C>,
   columns: SC
-): SelectQuery<Table<C>, C, SC> => ({ table: table.name, columns });
+): SelectQuery<Table<C>, C, SC> => ({ table: table, columns });
 
 // BOOLEAN EXPRESSION
 
-type OperandExpression<AvailableSymbols> =
-  | BooleanExpression<AvailableSymbols>
-  | AvailableSymbols
-  | number;
+type OperandExpression<T> = WhereExpression | T | number;
 
-export type BinaryExpression<Op, AvailableSymbols> = {
-  left: OperandExpression<AvailableSymbols>;
-  right: OperandExpression<AvailableSymbols>;
+export type BinaryExpression<Op, T> = {
+  left: OperandExpression<T>;
+  right: OperandExpression<T>;
   op: Op;
 };
 
@@ -80,46 +39,37 @@ enum BinaryOperator {
   Or = 'or',
 }
 
-export type EqualsExpression<AvailableSymbols> = BinaryExpression<
-  BinaryOperator.Equals,
-  AvailableSymbols
->;
-export type AndExpression<AvailableSymbols> = BinaryExpression<
-  BinaryOperator.And,
-  AvailableSymbols
->;
-export type OrExpression<AvailableSymbols> = BinaryExpression<
-  BinaryOperator.Or,
-  AvailableSymbols
->;
+export type EqualsExpression<T> = BinaryExpression<BinaryOperator.Equals, T>;
+export type AndExpression<T> = BinaryExpression<BinaryOperator.And, T>;
+export type OrExpression<T> = BinaryExpression<BinaryOperator.Or, T>;
 
-export type BooleanExpression<AvailableSymbols> =
-  | OrExpression<AvailableSymbols>
-  | AndExpression<AvailableSymbols>
-  | EqualsExpression<AvailableSymbols>;
+export type WhereExpression =
+  | OrExpression<unknown>
+  | AndExpression<unknown>
+  | EqualsExpression<unknown>;
 
-export const equals = <AvailableSymbols>(
-  left: OperandExpression<AvailableSymbols>,
-  right: OperandExpression<AvailableSymbols>
-): BooleanExpression<AvailableSymbols> => ({
+export const equals = <T>(
+  left: OperandExpression<T>,
+  right: OperandExpression<T>
+): WhereExpression => ({
   left,
   right,
   op: BinaryOperator.Equals,
 });
 
-export const and = <AvailableSymbols>(
-  left: BooleanExpression<AvailableSymbols>,
-  right: BooleanExpression<AvailableSymbols>
-): BooleanExpression<AvailableSymbols> => ({
+export const and = <T>(
+  left: WhereExpression<T>,
+  right: WhereExpression<T>
+): WhereExpression => ({
   left,
   right,
   op: BinaryOperator.And,
 });
 
-export const or = <AvailableSymbols>(
-  left: BooleanExpression<AvailableSymbols>,
-  right: BooleanExpression<AvailableSymbols>
-): BooleanExpression<AvailableSymbols> => ({
+export const or = <T>(
+  left: WhereExpression<T>,
+  right: WhereExpression<T>
+): WhereExpression => ({
   left,
   right,
   op: BinaryOperator.Or,
@@ -128,12 +78,12 @@ export const or = <AvailableSymbols>(
 // SELECT WHERE
 
 export const where =
-  <C extends TableColumns, AvailableSymbols extends keyof C>(
-    whereCondition: BooleanExpression<AvailableSymbols>
+  <C extends TableColumns, S extends keyof C>(
+    whereCondition: WhereExpression
   ) =>
-  <T extends Table<C>, SC extends SelectQueryColumn<C>[]>(
+  <T extends Table<C>, SC extends readonly SelectQueryColumn<C>[]>(
     query: SelectQuery<T, C, SC>
-  ): SelectWhereQuery<T, C, SC, AvailableSymbols> => ({
+  ): SelectWhereQuery<T, C, SC> => ({
     ...query,
     whereCondition,
   });
@@ -141,21 +91,22 @@ export const where =
 export interface SelectWhereQuery<
   T extends Table<C>,
   C extends TableColumns,
-  SC extends SelectQueryColumn<C>[],
-  AvailableSymbols
+  SC extends readonly SelectQueryColumn<C>[],
+  S
 > extends SelectQuery<T, C, SC> {
-  whereCondition: BooleanExpression<AvailableSymbols>;
+  whereCondition: WhereExpression<S>;
 }
 
 // EXAMPLE
+// TODO: delete
 
 const table = pipe(
   createTable('my_table'),
-  addColumn('id', { type: 'INT', nullable: false }),
-  addColumn('name', { type: 'TEXT' })
+  addColumn('id', { type: 'INT', nullable: false } as const),
+  addColumn('name', { type: 'TEXT' } as const)
 );
 
 const query = pipe(
-  select(table, ['name', 'id']),
-  where(equals('name' as const, 1))
+  select(table, columns(table.name, table.id)),
+  where(equals(table.name, 1))
 );
